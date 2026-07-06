@@ -60,39 +60,136 @@
 			this.form.trigger('reset');
 
 			$('#hsgcm-id').val('');
-
 			$('#hsgcm-status').val('draft');
 
-			$('#hsgcm-name').trigger('focus');
+			this.showMessage(
+				'',
+				''
+			);
+
+			$('#hsgcm-name').focus();
 
 		}
 
 		/**
 		 * Save campaign.
-		 *
-		 * Sprint 1:
-		 * Vi sender ikke AJAX endnu.
 		 */
 		saveCampaign(e) {
 
 			e.preventDefault();
 
-			alert(
-				'Sprint 1 completed.\n\nSave functionality will be implemented in Sprint 2.'
-			);
+			const button = $('#hsgcm-save');
+
+			button.prop('disabled', true);
+
+			$.post(
+
+				hsgcmAdmin.ajaxUrl,
+
+				{
+
+					action: 'hsgcm_save_campaign',
+
+					nonce: hsgcmAdmin.nonce,
+
+					id: $('#hsgcm-id').val(),
+
+					name: $('#hsgcm-name').val(),
+
+					status: $('#hsgcm-status').val(),
+
+					start_date: '',
+
+					end_date: '',
+
+					priority: 10
+
+				}
+
+			).done((response) => {
+
+				button.prop('disabled', false);
+
+				if (!response.success) {
+
+					this.showMessage(
+						response.data.message,
+						'error'
+					);
+
+					return;
+
+				}
+
+				this.showMessage(
+					response.data.message,
+					'success'
+				);
+
+				setTimeout(function () {
+
+					location.reload();
+
+				}, 800);
+
+			}).fail(() => {
+
+				button.prop('disabled', false);
+
+				this.showMessage(
+					'Server error.',
+					'error'
+				);
+
+			});
 
 		}
 
 		/**
-		 * Edit campaign.
+		 * Load campaign.
 		 */
 		editCampaign(e) {
 
 			e.preventDefault();
 
-			alert(
-				'Edit will be implemented in Sprint 2.'
-			);
+			const id = $(e.currentTarget).data('id');
+
+			$.post(
+
+				hsgcmAdmin.ajaxUrl,
+
+				{
+
+					action: 'hsgcm_get_campaign',
+
+					nonce: hsgcmAdmin.nonce,
+
+					id: id
+
+				}
+
+			).done((response) => {
+
+				if (!response.success) {
+
+					this.showMessage(
+						response.data.message,
+						'error'
+					);
+
+					return;
+
+				}
+
+				const c = response.data;
+
+				$('#hsgcm-id').val(c.id);
+
+				$('#hsgcm-name').val(c.name);
+
+				$('#hsgcm-status').val(c.status);
+
+			});
 
 		}
 
@@ -107,9 +204,60 @@
 				return;
 			}
 
-			alert(
-				'Delete will be implemented in Sprint 2.'
-			);
+			const id = $(e.currentTarget).data('id');
+
+			$.post(
+
+				hsgcmAdmin.ajaxUrl,
+
+				{
+
+					action: 'hsgcm_delete_campaign',
+
+					nonce: hsgcmAdmin.nonce,
+
+					id: id
+
+				}
+
+			).done((response) => {
+
+				if (!response.success) {
+
+					this.showMessage(
+						response.data.message,
+						'error'
+					);
+
+					return;
+
+				}
+
+				location.reload();
+
+			});
+
+		}
+
+		/**
+		 * Show message.
+		 */
+		showMessage(message, type) {
+
+			$('.hsgcm-message').remove();
+
+			if (message === '') {
+				return;
+			}
+
+			const notice =
+				'<div class="notice notice-' +
+				type +
+				' hsgcm-message"><p>' +
+				message +
+				'</p></div>';
+
+			$('.hsgcm-editor').prepend(notice);
 
 		}
 
