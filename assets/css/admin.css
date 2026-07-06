@@ -1,0 +1,86 @@
+/**
+ * HSG Campaign Manager
+ * Admin
+ */
+
+.hsgcm-wrapper {
+	display: flex;
+	gap: 24px;
+	margin-top: 20px;
+	align-items: flex-start;
+}
+
+.hsgcm-list {
+	flex: 2;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	padding: 20px;
+	border-radius: 4px;
+	box-sizing: border-box;
+}
+
+.hsgcm-editor {
+	flex: 1;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	padding: 20px;
+	border-radius: 4px;
+	box-sizing: border-box;
+	position: sticky;
+	top: 32px;
+}
+
+.hsgcm-list h2,
+.hsgcm-editor h2 {
+	margin-top: 0;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #eee;
+}
+
+.hsgcm-editor .form-table {
+	margin-top: 0;
+}
+
+.hsgcm-editor input[type="text"],
+.hsgcm-editor input[type="number"],
+.hsgcm-editor input[type="date"],
+.hsgcm-editor select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.hsgcm-editor .button-primary {
+	min-width: 180px;
+}
+
+.widefat td {
+	vertical-align: middle;
+}
+
+.hsgcm-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.notice.inline {
+	margin: 0;
+}
+
+@media screen and (max-width: 1200px) {
+
+	.hsgcm-wrapper {
+		flex-direction: column;
+	}
+
+	.hsgcm-list,
+	.hsgcm-editor {
+		width: 100%;
+		flex: none;
+	}
+
+	.hsgcm-editor {
+		position: static;
+	}
+
+}
