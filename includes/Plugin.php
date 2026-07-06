@@ -8,6 +8,7 @@
 namespace HSGCM;
 
 use HSGCM\Admin\Admin;
+use HSGCM\Admin\AjaxController;
 use HSGCM\Campaign\Campaign;
 
 defined( 'ABSPATH' ) || exit;
@@ -15,14 +16,14 @@ defined( 'ABSPATH' ) || exit;
 final class Plugin {
 
 	/**
-	 * Plugin instance.
+	 * Instance.
 	 *
 	 * @var Plugin|null
 	 */
 	private static ?Plugin $instance = null;
 
 	/**
-	 * Get instance.
+	 * Return instance.
 	 *
 	 * @return Plugin
 	 */
@@ -55,7 +56,7 @@ final class Plugin {
 	 */
 	public function init(): void {
 
-		// WooCommerce is required.
+		// WooCommerce required.
 		if ( ! class_exists( 'WooCommerce' ) ) {
 
 			add_action(
@@ -70,7 +71,10 @@ final class Plugin {
 		// Register campaign post type.
 		new Campaign();
 
-		// Start admin.
+		// Register AJAX endpoints.
+		new AjaxController();
+
+		// Load admin.
 		if ( is_admin() ) {
 			new Admin();
 		}
@@ -78,7 +82,7 @@ final class Plugin {
 	}
 
 	/**
-	 * Show WooCommerce required notice.
+	 * WooCommerce missing notice.
 	 *
 	 * @return void
 	 */
@@ -92,7 +96,10 @@ final class Plugin {
 
 				<strong>HSG Campaign Manager</strong>
 
-				<?php esc_html_e( ' requires WooCommerce to be installed and activated.', 'hsg-campaign-manager' ); ?>
+				<?php esc_html_e(
+					' requires WooCommerce to be installed and activated.',
+					'hsg-campaign-manager'
+				); ?>
 
 			</p>
 
