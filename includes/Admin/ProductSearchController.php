@@ -51,7 +51,10 @@ final class ProductSearchController {
 					'product',
 					'product_variation',
 				),
-				'post_status'    => 'publish',
+				'post_status'    => array(
+					'publish',
+					'private',
+				),
 				'posts_per_page' => 20,
 				's'              => $term,
 				'orderby'        => 'title',
