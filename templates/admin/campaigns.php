@@ -288,13 +288,19 @@ defined( 'ABSPATH' ) || exit;
 
 								</option>
 
+								<option value="multi_buy">
+
+									<?php esc_html_e( 'X products for Y price', 'hsg-campaign-manager' ); ?>
+
+								</option>
+
 							</select>
 
 						</td>
 
 					</tr>
 
-					<tr>
+					<tr class="hsgcm-standard-pricing-row">
 
 						<th>
 
@@ -312,6 +318,56 @@ defined( 'ABSPATH' ) || exit;
 								type="number"
 								id="hsgcm-value"
 								min="0"
+								step="0.01"
+								inputmode="decimal">
+
+						</td>
+
+					</tr>
+
+					<tr class="hsgcm-multi-buy-row" style="display:none;">
+
+						<th>
+
+							<label for="hsgcm-quantity">
+
+								<?php esc_html_e( 'Quantity', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="number"
+								id="hsgcm-quantity"
+								min="2"
+								step="1"
+								value="2">
+
+						</td>
+
+					</tr>
+
+					<tr class="hsgcm-multi-buy-row" style="display:none;">
+
+						<th>
+
+							<label for="hsgcm-bundle-price">
+
+								<?php esc_html_e( 'Bundle price', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="number"
+								id="hsgcm-bundle-price"
+								min="0.01"
 								step="0.01"
 								inputmode="decimal">
 

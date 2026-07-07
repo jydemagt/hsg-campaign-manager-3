@@ -19,6 +19,7 @@
 
 			this.initProductSearch();
 			this.bindEvents();
+			this.togglePricingFields();
 
 		}
 
@@ -96,6 +97,12 @@
 				this.deleteCampaign.bind(this)
 			);
 
+			this.form.on(
+				'change',
+				'#hsgcm-type',
+				this.togglePricingFields.bind(this)
+			);
+
 		}
 
 		/**
@@ -117,6 +124,10 @@
 
 			$('#hsgcm-value').val('');
 
+			$('#hsgcm-quantity').val('2');
+
+			$('#hsgcm-bundle-price').val('');
+
 			$('#hsgcm-coupon').val('');
 
 			$('#hsgcm-start-date').val('');
@@ -129,6 +140,8 @@
 				.empty()
 				.val(null)
 				.trigger('change');
+
+			this.togglePricingFields();
 
 			this.showMessage('', '');
 
@@ -168,6 +181,10 @@
 					type: $('#hsgcm-type').val(),
 
 					value: $('#hsgcm-value').val(),
+
+					quantity: $('#hsgcm-quantity').val(),
+
+					bundle_price: $('#hsgcm-bundle-price').val(),
 
 					coupon: $('#hsgcm-coupon').val(),
 
@@ -274,6 +291,10 @@
 
 				$('#hsgcm-value').val(c.value);
 
+				$('#hsgcm-quantity').val(c.quantity);
+
+				$('#hsgcm-bundle-price').val(c.bundle_price);
+
 				$('#hsgcm-coupon').val(c.coupon);
 
 				$('#hsgcm-start-date').val(c.start_date);
@@ -302,8 +323,25 @@
 				}
 
 				$('#hsgcm-products').trigger('change');
+				this.togglePricingFields();
 
 			});
+
+		}
+
+		/**
+		 * Toggle pricing fields based on selected campaign type.
+		 */
+		togglePricingFields() {
+
+			const isMultiBuy = 'multi_buy' === $('#hsgcm-type').val();
+
+			$('.hsgcm-standard-pricing-row').toggle(!isMultiBuy);
+			$('.hsgcm-multi-buy-row').toggle(isMultiBuy);
+
+			if (isMultiBuy && !$('#hsgcm-quantity').val()) {
+				$('#hsgcm-quantity').val('2');
+			}
 
 		}
 

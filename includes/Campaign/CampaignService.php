@@ -142,9 +142,14 @@ final class CampaignService {
 	private function sanitize( array $campaign ): array {
 
 		$priority = $campaign['priority'] ?? '0';
+		$quantity = $campaign['quantity'] ?? '2';
 
 		if ( ! is_scalar( $priority ) ) {
 			$priority = '';
+		}
+
+		if ( ! is_scalar( $quantity ) ) {
+			$quantity = '';
 		}
 
 		return array(
@@ -154,6 +159,8 @@ final class CampaignService {
 			'start_date' => sanitize_text_field( $campaign['start_date'] ?? '' ),
 			'end_date'   => sanitize_text_field( $campaign['end_date'] ?? '' ),
 			'priority'   => sanitize_text_field( (string) $priority ),
+			'quantity'   => sanitize_text_field( (string) $quantity ),
+			'bundle_price' => sanitize_text_field( (string) ( $campaign['bundle_price'] ?? '' ) ),
 			'products'   => array_map( 'absint', (array) ( $campaign['products'] ?? array() ) ),
 			'type'       => sanitize_key( $campaign['type'] ?? 'fixed_price' ),
 			'value'      => sanitize_text_field( (string) ( $campaign['value'] ?? '' ) ),
@@ -173,7 +180,13 @@ final class CampaignService {
 	private function normalize( array $campaign ): array {
 
 		$campaign['priority'] = (int) $campaign['priority'];
-		$campaign['value']    = wc_format_decimal( $campaign['value'] );
+		$campaign['quantity'] = (int) $campaign['quantity'];
+		$campaign['value']    = '' === $campaign['value']
+			? ''
+			: wc_format_decimal( $campaign['value'] );
+		$campaign['bundle_price'] = '' === $campaign['bundle_price']
+			? ''
+			: wc_format_decimal( $campaign['bundle_price'] );
 		$campaign['products'] = array_values(
 			array_filter(
 				array_map( 'absint', $campaign['products'] )
@@ -211,7 +224,7 @@ final class CampaignService {
 
 		}
 
-		if ( ! in_array( $campaign['type'], array( 'fixed_price', 'percentage_discount', 'fixed_discount' ), true ) ) {
+		if ( ! in_array( $campaign['type'], array( 'fixed_price', 'percentage_discount', 'fixed_discount', 'multi_buy' ), true ) ) {
 
 			return array(
 				'success' => false,
@@ -266,48 +279,81 @@ final class CampaignService {
 
 		}
 
-		if ( '' === $campaign['value'] ) {
+		if ( 'multi_buy' === $campaign['type'] ) {
 
-			return array(
-				'success' => false,
-				'message' => __( 'Campaign value is required.', 'hsg-campaign-manager' ),
-			);
+			if ( empty( array_filter( array_map( 'absint', (array) $campaign['products'] ) ) ) ) {
 
-		}
+				return array(
+					'success' => false,
+					'message' => __( 'Multi-buy campaigns require at least one product.', 'hsg-campaign-manager' ),
+				);
 
-		if ( ! is_numeric( $campaign['value'] ) ) {
+			}
 
-			return array(
-				'success' => false,
-				'message' => __( 'Campaign value must be numeric.', 'hsg-campaign-manager' ),
-			);
+			if ( ! $this->is_valid_multi_buy_quantity( $campaign['quantity'] ) ) {
 
-		}
+				return array(
+					'success' => false,
+					'message' => __( 'Quantity must be an integer of 2 or greater.', 'hsg-campaign-manager' ),
+				);
 
-		if (
-			in_array( $campaign['type'], array( 'fixed_price', 'fixed_discount' ), true ) &&
-			(float) $campaign['value'] < 0
-		) {
+			}
 
-			return array(
-				'success' => false,
-				'message' => __( 'Campaign value cannot be negative.', 'hsg-campaign-manager' ),
-			);
+			if ( '' === $campaign['bundle_price'] || ! is_numeric( $campaign['bundle_price'] ) || (float) $campaign['bundle_price'] <= 0 ) {
 
-		}
+				return array(
+					'success' => false,
+					'message' => __( 'Bundle price must be greater than 0.', 'hsg-campaign-manager' ),
+				);
 
-		if (
-			'percentage_discount' === $campaign['type'] &&
-			(
-				(float) $campaign['value'] < 1 ||
-				(float) $campaign['value'] > 100
-			)
-		) {
+			}
 
-			return array(
-				'success' => false,
-				'message' => __( 'Percentage discount must be between 1 and 100.', 'hsg-campaign-manager' ),
-			);
+		} else {
+
+			if ( '' === $campaign['value'] ) {
+
+				return array(
+					'success' => false,
+					'message' => __( 'Campaign value is required.', 'hsg-campaign-manager' ),
+				);
+
+			}
+
+			if ( ! is_numeric( $campaign['value'] ) ) {
+
+				return array(
+					'success' => false,
+					'message' => __( 'Campaign value must be numeric.', 'hsg-campaign-manager' ),
+				);
+
+			}
+
+			if (
+				in_array( $campaign['type'], array( 'fixed_price', 'fixed_discount' ), true ) &&
+				(float) $campaign['value'] < 0
+			) {
+
+				return array(
+					'success' => false,
+					'message' => __( 'Campaign value cannot be negative.', 'hsg-campaign-manager' ),
+				);
+
+			}
+
+			if (
+				'percentage_discount' === $campaign['type'] &&
+				(
+					(float) $campaign['value'] < 1 ||
+					(float) $campaign['value'] > 100
+				)
+			) {
+
+				return array(
+					'success' => false,
+					'message' => __( 'Percentage discount must be between 1 and 100.', 'hsg-campaign-manager' ),
+				);
+
+			}
 
 		}
 
@@ -333,6 +379,25 @@ final class CampaignService {
 		$priority = trim( (string) $priority );
 
 		return '' !== $priority && ctype_digit( $priority );
+
+	}
+
+	/**
+	 * Check whether a quantity value is an integer of 2 or greater.
+	 *
+	 * @param mixed $quantity Quantity value.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_multi_buy_quantity( $quantity ): bool {
+
+		if ( ! is_scalar( $quantity ) ) {
+			return false;
+		}
+
+		$quantity = trim( (string) $quantity );
+
+		return '' !== $quantity && ctype_digit( $quantity ) && (int) $quantity >= 2;
 
 	}
 

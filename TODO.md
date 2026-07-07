@@ -39,6 +39,24 @@ Acceptance criteria:
 - Campaign pricing behavior is covered by tests or documented manual checks.
 - WooCommerce core is not modified.
 
+### Add Multi-Buy Pricing
+
+Description:
+Implement runtime pricing for `multi_buy` campaigns so the stored quantity and bundle price data can be applied in WooCommerce.
+
+Expected files:
+- `includes/Pricing/CampaignLoader.php`
+- `includes/Pricing/CampaignEvaluator.php`
+- `includes/Pricing/ConflictResolver.php`
+- `includes/Pricing/PriceCalculator.php`
+- `includes/Pricing/PricingService.php`
+
+Acceptance criteria:
+- `multi_buy` campaigns are included in the active pricing pipeline.
+- Bundled quantities reduce product pricing to the configured bundle price.
+- Existing campaign types keep their current behavior.
+- Pricing logic remains in the service layer.
+
 ### Harden Scheduling Rules
 
 Description:

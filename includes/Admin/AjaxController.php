@@ -116,6 +116,8 @@ final class AjaxController {
 				'start_date' => sanitize_text_field( wp_unslash( $_POST['start_date'] ?? '' ) ),
 				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
 				'priority'   => sanitize_text_field( wp_unslash( (string) $priority ) ),
+				'quantity'   => sanitize_text_field( wp_unslash( $_POST['quantity'] ?? '2' ) ),
+				'bundle_price' => sanitize_text_field( wp_unslash( $_POST['bundle_price'] ?? '' ) ),
 				'products'   => $products,
 				'type'       => sanitize_key( wp_unslash( $_POST['type'] ?? 'fixed_price' ) ),
 				'value'      => sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) ),

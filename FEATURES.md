@@ -11,6 +11,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - WooCommerce submenu page for Campaign Manager.
 - Campaign list showing ID, name, status, and actions.
 - Admin editor form for name, status, priority, products, pricing type, pricing value, coupon code, start date, end date, and stacking.
+- Multi-buy campaign type with quantity and bundle price fields in the admin editor.
 - Create, update, edit, and delete flows through authenticated AJAX.
 - Product search powered by WooCommerce products and variations.
 - Service-layer validation for required name, date ranges, non-negative priority, required pricing value, numeric pricing value, and percentage range.
@@ -43,6 +44,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 
 - Metadata fields exist for `type` and `value`.
 - Foundation classes exist for loading, evaluating, resolving, and calculating campaign prices.
+- Multi-buy campaigns are stored and validated, but runtime pricing does not apply them yet.
 - Further catalog, cart, checkout, caching, and edge-case hardening remains.
 
 ### Coupon Engine
