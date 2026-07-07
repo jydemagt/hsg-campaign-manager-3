@@ -11,16 +11,84 @@
 
 		constructor() {
 
-			console.log('HSGCM: admin.js loaded');
+			console.log('HSGCM loaded');
 
 			this.form = $('#hsgcm-campaign-form');
 
 			if (!this.form.length) {
-				console.error('HSGCM: Form not found');
 				return;
 			}
 
+			this.initProductSelector();
+
 			this.bindEvents();
+
+		}
+
+		/**
+		 * Initialise WooCommerce product selector.
+		 */
+		initProductSelector() {
+
+			$('#hsgcm-products').selectWoo({
+
+				width: '100%',
+
+				placeholder: 'Search products...',
+
+				allowClear: true,
+
+				ajax: {
+
+					url: hsgcmAdmin.ajaxUrl,
+
+					dataType: 'json',
+
+					delay: 250,
+
+					data: function (params) {
+
+						return {
+
+							action: 'woocommerce_json_search_products_and_variations',
+
+							security: wc_enhanced_select_params.search_products_nonce,
+
+							term: params.term || '',
+
+							limit: 20
+
+						};
+
+					},
+
+					processResults: function (data) {
+
+						const results = [];
+
+						$.each(data, function (id, text) {
+
+							results.push({
+
+								id: id,
+
+								text: text
+
+							});
+
+						});
+
+						return {
+
+							results: results
+
+						};
+
+					}
+
+				}
+
+			});
 
 		}
 
@@ -28,8 +96,6 @@
 		 * Register events.
 		 */
 		bindEvents() {
-
-			console.log('HSGCM: Binding events');
 
 			$('#hsgcm-new-campaign').on(
 				'click',
@@ -60,16 +126,15 @@
 
 			e.preventDefault();
 
-			console.log('HSGCM: New campaign');
-
 			this.form.trigger('reset');
 
 			$('#hsgcm-id').val('');
+
 			$('#hsgcm-status').val('draft');
 
-			this.showMessage('', '');
+			$('#hsgcm-products').val(null).trigger('change');
 
-			$('#hsgcm-name').focus();
+			this.showMessage('', '');
 
 		}
 
@@ -80,8 +145,6 @@
 
 			e.preventDefault();
 
-			console.log('HSGCM: Save clicked');
-
 			const button = $('#hsgcm-save');
 
 			button.prop('disabled', true);
@@ -91,21 +154,30 @@
 				hsgcmAdmin.ajaxUrl,
 
 				{
+
 					action: 'hsgcm_save_campaign',
+
 					nonce: hsgcmAdmin.nonce,
+
 					id: $('#hsgcm-id').val(),
+
 					name: $('#hsgcm-name').val(),
+
 					status: $('#hsgcm-status').val(),
+
+					products: $('#hsgcm-products').val(),
+
 					start_date: '',
+
 					end_date: '',
+
 					priority: 10
+
 				}
 
 			)
 
 			.done((response) => {
-
-				console.log('HSGCM: Save response', response);
 
 				button.prop('disabled', false);
 
@@ -129,18 +201,16 @@
 
 					location.reload();
 
-				}, 800);
+				}, 500);
 
 			})
 
-			.fail((xhr) => {
-
-				console.error('HSGCM: Save failed', xhr);
+			.fail(() => {
 
 				button.prop('disabled', false);
 
 				this.showMessage(
-					'Server error.',
+					'Unexpected server error.',
 					'error'
 				);
 
@@ -155,27 +225,25 @@
 
 			e.preventDefault();
 
-			console.log('HSGCM: Edit clicked');
-
 			const id = $(e.currentTarget).data('id');
-
-			console.log('HSGCM: Campaign ID', id);
 
 			$.post(
 
 				hsgcmAdmin.ajaxUrl,
 
 				{
+
 					action: 'hsgcm_get_campaign',
+
 					nonce: hsgcmAdmin.nonce,
+
 					id: id
+
 				}
 
 			)
 
 			.done((response) => {
-
-				console.log('HSGCM: AJAX response', response);
 
 				if (!response.success) {
 
@@ -190,19 +258,11 @@
 
 				const c = response.data;
 
-				console.log('HSGCM: Filling form', c);
-
 				$('#hsgcm-id').val(c.id);
+
 				$('#hsgcm-name').val(c.name);
+
 				$('#hsgcm-status').val(c.status);
-
-				console.log('HSGCM: Form updated');
-
-			})
-
-			.fail((xhr) => {
-
-				console.error('HSGCM: AJAX failed', xhr);
 
 			});
 
@@ -215,8 +275,6 @@
 
 			e.preventDefault();
 
-			console.log('HSGCM: Delete clicked');
-
 			if (!confirm('Delete campaign?')) {
 				return;
 			}
@@ -228,16 +286,18 @@
 				hsgcmAdmin.ajaxUrl,
 
 				{
+
 					action: 'hsgcm_delete_campaign',
+
 					nonce: hsgcmAdmin.nonce,
+
 					id: id
+
 				}
 
 			)
 
 			.done((response) => {
-
-				console.log('HSGCM: Delete response', response);
 
 				if (!response.success) {
 
@@ -252,12 +312,6 @@
 
 				location.reload();
 
-			})
-
-			.fail((xhr) => {
-
-				console.error('HSGCM: Delete failed', xhr);
-
 			});
 
 		}
@@ -269,18 +323,17 @@
 
 			$('.hsgcm-message').remove();
 
-			if (message === '') {
+			if (!message) {
 				return;
 			}
 
-			const notice =
+			$('.hsgcm-editor').prepend(
 				'<div class="notice notice-' +
 				type +
 				' hsgcm-message"><p>' +
 				message +
-				'</p></div>';
-
-			$('.hsgcm-editor').prepend(notice);
+				'</p></div>'
+			);
 
 		}
 
