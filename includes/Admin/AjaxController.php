@@ -36,27 +36,14 @@ final class AjaxController {
 		$this->service    = new CampaignService();
 		$this->repository = new CampaignRepository();
 
-		add_action(
-			'wp_ajax_hsgcm_save_campaign',
-			array( $this, 'save_campaign' )
-		);
-
-		add_action(
-			'wp_ajax_hsgcm_get_campaign',
-			array( $this, 'get_campaign' )
-		);
-
-		add_action(
-			'wp_ajax_hsgcm_delete_campaign',
-			array( $this, 'delete_campaign' )
-		);
+		add_action( 'wp_ajax_hsgcm_get_campaign', array( $this, 'get_campaign' ) );
+		add_action( 'wp_ajax_hsgcm_save_campaign', array( $this, 'save_campaign' ) );
+		add_action( 'wp_ajax_hsgcm_delete_campaign', array( $this, 'delete_campaign' ) );
 
 	}
 
 	/**
 	 * Verify request.
-	 *
-	 * @return void
 	 */
 	private function verify(): void {
 
@@ -76,9 +63,32 @@ final class AjaxController {
 	}
 
 	/**
+	 * Load campaign.
+	 */
+	public function get_campaign(): void {
+
+		$this->verify();
+
+		$id = absint( $_POST['id'] ?? 0 );
+
+		$campaign = $this->service->get( $id );
+
+		if ( null === $campaign ) {
+
+			wp_send_json_error(
+				array(
+					'message' => __( 'Campaign not found.', 'hsg-campaign-manager' ),
+				)
+			);
+
+		}
+
+		wp_send_json_success( $campaign );
+
+	}
+
+	/**
 	 * Save campaign.
-	 *
-	 * @return void
 	 */
 	public function save_campaign(): void {
 
@@ -109,44 +119,15 @@ final class AjaxController {
 	}
 
 	/**
-	 * Get campaign.
-	 *
-	 * @return void
-	 */
-	public function get_campaign(): void {
-
-		$this->verify();
-
-		$id = absint( $_POST['id'] ?? 0 );
-
-		$campaign = $this->repository->find( $id );
-
-		if ( ! $campaign ) {
-
-			wp_send_json_error(
-				array(
-					'message' => __( 'Campaign not found.', 'hsg-campaign-manager' ),
-				)
-			);
-
-		}
-
-		wp_send_json_success( $campaign );
-
-	}
-
-	/**
 	 * Delete campaign.
-	 *
-	 * @return void
 	 */
 	public function delete_campaign(): void {
 
 		$this->verify();
 
-		$result = $this->service->delete(
-			absint( $_POST['id'] ?? 0 )
-		);
+		$id = absint( $_POST['id'] ?? 0 );
+
+		$result = $this->service->delete( $id );
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( $result );
