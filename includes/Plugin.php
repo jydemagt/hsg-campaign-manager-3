@@ -11,6 +11,7 @@ use HSGCM\Admin\Admin;
 use HSGCM\Admin\AjaxController;
 use HSGCM\Admin\ProductSearchController;
 use HSGCM\Campaign\Campaign;
+use HSGCM\Pricing\PricingService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -75,6 +76,9 @@ final class Plugin {
 		// Register AJAX controllers.
 		new AjaxController();
 		new ProductSearchController();
+
+		// Register pricing engine.
+		new PricingService();
 
 		// Load admin.
 		if ( is_admin() ) {

@@ -117,10 +117,8 @@ final class AjaxController {
 				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
 				'priority'   => sanitize_text_field( wp_unslash( (string) $priority ) ),
 				'products'   => $products,
-
-				// Nye felter
 				'type'       => sanitize_key( wp_unslash( $_POST['type'] ?? 'fixed_price' ) ),
-				'value'      => wc_format_decimal( wp_unslash( $_POST['value'] ?? '' ) ),
+				'value'      => sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) ),
 				'coupon'     => sanitize_text_field( wp_unslash( $_POST['coupon'] ?? '' ) ),
 				'stackable'  => ! empty( $_POST['stackable'] ),
 			)

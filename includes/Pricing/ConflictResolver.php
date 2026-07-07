@@ -12,36 +12,51 @@ defined( 'ABSPATH' ) || exit;
 final class ConflictResolver {
 
 	/**
-	 * Select the winning campaign.
+	 * Resolve applicable campaigns.
 	 *
 	 * Higher priority values win. Ties fall back to the highest campaign ID.
+	 * A non-stackable winning campaign is applied alone; stackable campaigns
+	 * can be combined with other stackable campaigns.
 	 *
 	 * @param array $campaigns Campaigns.
 	 *
-	 * @return array|null
+	 * @return array
 	 */
-	public function resolve( array $campaigns ): ?array {
+	public function resolve( array $campaigns ): array {
 
 		if ( empty( $campaigns ) ) {
-			return null;
+			return array();
 		}
 
 		usort(
 			$campaigns,
-			static function ( array $left, array $right ): int {
+			static function ( object $a, object $b ): int {
 
-				$priority = (int) ( $right['priority'] ?? 0 ) <=> (int) ( $left['priority'] ?? 0 );
+				$priority = $b->priority <=> $a->priority;
 
 				if ( 0 !== $priority ) {
 					return $priority;
 				}
 
-				return (int) ( $right['id'] ?? 0 ) <=> (int) ( $left['id'] ?? 0 );
+				return $b->id <=> $a->id;
 
 			}
 		);
 
-		return $campaigns[0];
+		$winner = reset( $campaigns );
+
+		if ( ! $winner->stackable ) {
+			return array( $winner );
+		}
+
+		return array_values(
+			array_filter(
+				$campaigns,
+				static function ( object $campaign ): bool {
+					return $campaign->stackable;
+				}
+			)
+		);
 
 	}
 

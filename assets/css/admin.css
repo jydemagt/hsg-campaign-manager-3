@@ -20,7 +20,7 @@
 }
 
 .hsgcm-editor {
-	flex: 1;
+	flex: 1.2;
 	background: #fff;
 	border: 1px solid #dcdcde;
 	padding: 20px;
@@ -38,6 +38,17 @@
 }
 
 .hsgcm-editor .form-table {
+	margin-top: 0;
+	margin-bottom: 18px;
+}
+
+.hsgcm-editor h3 {
+	margin: 20px 0 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.hsgcm-editor h3:first-of-type {
 	margin-top: 0;
 }
 

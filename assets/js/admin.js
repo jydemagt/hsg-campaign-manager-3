@@ -111,7 +111,22 @@
 
 			$('#hsgcm-status').val('draft');
 
+			$('#hsgcm-priority').val('0');
+
+			$('#hsgcm-type').val('fixed_price');
+
+			$('#hsgcm-value').val('');
+
+			$('#hsgcm-coupon').val('');
+
+			$('#hsgcm-start-date').val('');
+
+			$('#hsgcm-end-date').val('');
+
+			$('#hsgcm-stackable').prop('checked', false);
+
 			$('#hsgcm-products')
+				.empty()
 				.val(null)
 				.trigger('change');
 
@@ -146,13 +161,21 @@
 
 					status: $('#hsgcm-status').val(),
 
+					priority: $('#hsgcm-priority').val(),
+
 					products: $('#hsgcm-products').val(),
 
-					start_date: '',
+					type: $('#hsgcm-type').val(),
 
-					end_date: '',
+					value: $('#hsgcm-value').val(),
 
-					priority: 0
+					coupon: $('#hsgcm-coupon').val(),
+
+					start_date: $('#hsgcm-start-date').val(),
+
+					end_date: $('#hsgcm-end-date').val(),
+
+					stackable: $('#hsgcm-stackable').is(':checked') ? 1 : 0
 
 				}
 
@@ -245,6 +268,41 @@
 
 				$('#hsgcm-status').val(c.status);
 
+				$('#hsgcm-priority').val(c.priority);
+
+				$('#hsgcm-type').val(c.type);
+
+				$('#hsgcm-value').val(c.value);
+
+				$('#hsgcm-coupon').val(c.coupon);
+
+				$('#hsgcm-start-date').val(c.start_date);
+
+				$('#hsgcm-end-date').val(c.end_date);
+
+				$('#hsgcm-stackable').prop('checked', !!c.stackable);
+
+				$('#hsgcm-products').empty();
+
+				if (Array.isArray(c.products)) {
+
+					c.products.forEach((product) => {
+
+						const option = new Option(
+							product.text,
+							product.id,
+							true,
+							true
+						);
+
+						$('#hsgcm-products').append(option);
+
+					});
+
+				}
+
+				$('#hsgcm-products').trigger('change');
+
 			});
 
 		}
@@ -309,11 +367,13 @@
 			}
 
 			$('.hsgcm-editor').prepend(
-				'<div class="notice notice-' +
-				type +
-				' hsgcm-message"><p>' +
-				message +
-				'</p></div>'
+				$('<div></div>')
+					.addClass('notice')
+					.addClass('notice-' + type)
+					.addClass('hsgcm-message')
+					.append(
+						$('<p></p>').text(message)
+					)
 			);
 
 		}

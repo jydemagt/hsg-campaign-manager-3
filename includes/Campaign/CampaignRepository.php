@@ -39,6 +39,25 @@ final class CampaignRepository {
 	}
 
 	/**
+	 * Return published campaigns.
+	 *
+	 * @return array
+	 */
+	public function published(): array {
+
+		return get_posts(
+			array(
+				'post_type'      => Campaign::post_type(),
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+	}
+
+	/**
 	 * Find campaign.
 	 *
 	 * @param int $id Campaign ID.
@@ -83,6 +102,11 @@ final class CampaignRepository {
 			$data
 		);
 
+		$data['id']       = $id;
+		$data['name']     = $post->post_title;
+		$data['status']   = $post->post_status;
+		$data['products'] = is_array( $data['products'] ) ? $data['products'] : array();
+
 		$product_list = array();
 
 		foreach ( $data['products'] as $product_id ) {
@@ -101,6 +125,60 @@ final class CampaignRepository {
 		}
 
 		$data['products'] = $product_list;
+
+		return $data;
+
+	}
+
+	/**
+	 * Find raw campaign data for service use.
+	 *
+	 * @param int $id Campaign ID.
+	 *
+	 * @return array|null
+	 */
+	public function find_raw( int $id ): ?array {
+
+		$post = get_post( $id );
+
+		if (
+			! $post ||
+			$post->post_type !== Campaign::post_type()
+		) {
+			return null;
+		}
+
+		$data = get_post_meta(
+			$id,
+			self::META_KEY,
+			true
+		);
+
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		$data = array_merge(
+			array(
+				'id'         => $id,
+				'name'       => $post->post_title,
+				'status'     => $post->post_status,
+				'start_date' => '',
+				'end_date'   => '',
+				'priority'   => 0,
+				'products'   => array(),
+				'type'       => 'fixed_price',
+				'value'      => '',
+				'coupon'     => '',
+				'stackable'  => false,
+			),
+			$data
+		);
+
+		$data['id']       = $id;
+		$data['name']     = $post->post_title;
+		$data['status']   = $post->post_status;
+		$data['products'] = is_array( $data['products'] ) ? $data['products'] : array();
 
 		return $data;
 
@@ -127,6 +205,8 @@ final class CampaignRepository {
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
 		}
+
+		$campaign['id'] = (int) $post_id;
 
 		update_post_meta(
 			$post_id,
