@@ -31,6 +31,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Price calculation supports fixed price, percentage discount, and fixed discount.
 - WooCommerce product and variation price filters call the pricing service.
 - Multi-buy runtime pricing applies complete bundles in cart and checkout.
+- Multi-buy line-item notices appear in cart and checkout when a bundle is applied.
 
 ### Admin Security Baseline
 
@@ -45,7 +46,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 
 - Metadata fields exist for `type` and `value`.
 - Foundation classes exist for loading, evaluating, resolving, and calculating campaign prices.
-- Multi-buy campaigns are stored, validated, and priced at cart and checkout time.
+- Multi-buy campaigns are stored, validated, priced at cart and checkout time, and surface line-item notices for completed bundles.
 - Further catalog, caching, and edge-case hardening remains.
 
 ### Coupon Engine

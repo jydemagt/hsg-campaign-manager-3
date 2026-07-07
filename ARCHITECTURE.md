@@ -117,7 +117,7 @@ Pricing service responsibilities:
 - `ConflictResolver` sorts campaigns by descending priority, then by descending ID, and applies stackability rules.
 - `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
 - `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float` and connects WooCommerce price filters to the pricing engine.
-- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`.
+- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, and stores notice metadata for display through WooCommerce item data filters.
 
 Campaign admin validation remains in `CampaignService`. Runtime pricing decisions live in the pricing service classes.
 
@@ -219,6 +219,7 @@ Pricing runtime:
 5. `ConflictResolver` orders campaigns by descending priority and respects stackability.
 6. `PriceCalculator` applies the winning campaign set for standard pricing.
 7. `CartPricingService` applies complete multi-buy bundles in cart and checkout through `woocommerce_before_calculate_totals`.
+8. `CartPricingService::filter_item_data()` renders line-item notices for completed multi-buy bundles in cart and checkout.
 
 ## Campaign Storage
 
@@ -252,6 +253,7 @@ Current WooCommerce touchpoints:
 - Product values are formatted through WooCommerce helpers such as `wc_format_decimal()`.
 - Pricing is connected through WooCommerce price filters for simple products and variations.
 - Multi-buy bundle pricing is applied in cart and checkout with `woocommerce_before_calculate_totals`.
+- Multi-buy notices are rendered with WooCommerce cart item data filters.
 
 The current pricing foundation can calculate campaign-adjusted product prices from active campaigns and apply multi-buy bundles in cart and checkout. Coupon behavior, order analytics, and REST exposure are not implemented yet.
 
