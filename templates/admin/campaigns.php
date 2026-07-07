@@ -6,24 +6,16 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-
 ?>
 
 <div class="wrap">
 
 	<h1 class="wp-heading-inline">
-
 		<?php esc_html_e( 'Campaign Manager', 'hsg-campaign-manager' ); ?>
-
 	</h1>
 
-	<a
-		href="#"
-		class="page-title-action"
-		id="hsgcm-new-campaign">
-
+	<a href="#" id="hsgcm-new-campaign" class="page-title-action">
 		<?php esc_html_e( 'Add Campaign', 'hsg-campaign-manager' ); ?>
-
 	</a>
 
 	<hr class="wp-header-end">
@@ -32,103 +24,49 @@ defined( 'ABSPATH' ) || exit;
 
 		<div class="hsgcm-list">
 
-			<h2>
+			<h2><?php esc_html_e( 'Campaigns', 'hsg-campaign-manager' ); ?></h2>
 
-				<?php esc_html_e( 'Campaigns', 'hsg-campaign-manager' ); ?>
+			<table class="widefat striped">
 
-			</h2>
+				<thead>
 
-			<?php if ( empty( $campaigns ) ) : ?>
+				<tr>
+					<th width="60">ID</th>
+					<th><?php esc_html_e( 'Campaign', 'hsg-campaign-manager' ); ?></th>
+					<th width="120"><?php esc_html_e( 'Status', 'hsg-campaign-manager' ); ?></th>
+					<th width="160"><?php esc_html_e( 'Actions', 'hsg-campaign-manager' ); ?></th>
+				</tr>
 
-				<div class="notice notice-info inline">
+				</thead>
 
-					<p>
+				<tbody>
 
-						<?php esc_html_e(
-							'No campaigns have been created yet.',
-							'hsg-campaign-manager'
-						); ?>
+				<?php if ( empty( $campaigns ) ) : ?>
 
-					</p>
+					<tr>
 
-				</div>
+						<td colspan="4">
 
-			<?php else : ?>
+							<?php esc_html_e(
+								'No campaigns found.',
+								'hsg-campaign-manager'
+							); ?>
 
-				<table class="widefat striped">
+						</td>
 
-					<thead>
+					</tr>
 
-						<tr>
-
-							<th width="40">
-
-								ID
-
-							</th>
-
-							<th>
-
-								<?php esc_html_e(
-									'Name',
-									'hsg-campaign-manager'
-								); ?>
-
-							</th>
-
-							<th width="120">
-
-								<?php esc_html_e(
-									'Status',
-									'hsg-campaign-manager'
-								); ?>
-
-							</th>
-
-							<th width="160">
-
-								<?php esc_html_e(
-									'Actions',
-									'hsg-campaign-manager'
-								); ?>
-
-							</th>
-
-						</tr>
-
-					</thead>
-
-					<tbody>
+				<?php else : ?>
 
 					<?php foreach ( $campaigns as $campaign ) : ?>
 
 						<tr>
 
-							<td>
+							<td><?php echo esc_html( $campaign->ID ); ?></td>
 
-								<?php echo esc_html( $campaign->ID ); ?>
+							<td><?php echo esc_html( $campaign->post_title ); ?></td>
 
-							</td>
-
-							<td>
-
-								<strong>
-
-									<?php echo esc_html(
-										$campaign->post_title
-									); ?>
-
-								</strong>
-
-							</td>
-
-							<td>
-
-								<?php echo esc_html(
-									ucfirst( $campaign->post_status )
-								); ?>
-
-							</td>
+							<td><?php echo esc_html( ucfirst( $campaign->post_status ) ); ?></td>
 
 							<td>
 
@@ -137,10 +75,7 @@ defined( 'ABSPATH' ) || exit;
 									class="button button-small hsgcm-edit"
 									data-id="<?php echo esc_attr( $campaign->ID ); ?>">
 
-									<?php esc_html_e(
-										'Edit',
-										'hsg-campaign-manager'
-									); ?>
+									<?php esc_html_e( 'Edit', 'hsg-campaign-manager' ); ?>
 
 								</a>
 
@@ -149,10 +84,7 @@ defined( 'ABSPATH' ) || exit;
 									class="button button-small hsgcm-delete"
 									data-id="<?php echo esc_attr( $campaign->ID ); ?>">
 
-									<?php esc_html_e(
-										'Delete',
-										'hsg-campaign-manager'
-									); ?>
+									<?php esc_html_e( 'Delete', 'hsg-campaign-manager' ); ?>
 
 								</a>
 
@@ -162,32 +94,23 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php endforeach; ?>
 
-					</tbody>
+				<?php endif; ?>
 
-				</table>
+				</tbody>
 
-			<?php endif; ?>
+			</table>
 
 		</div>
 
 		<div class="hsgcm-editor">
 
-			<h2>
+			<h2><?php esc_html_e( 'Campaign', 'hsg-campaign-manager' ); ?></h2>
 
-				<?php esc_html_e(
-					'Campaign',
-					'hsg-campaign-manager'
-				); ?>
-
-			</h2>
-
-			<form
-				id="hsgcm-campaign-form">
+			<form id="hsgcm-campaign-form">
 
 				<input
 					type="hidden"
-					id="hsgcm-id"
-					value="">
+					id="hsgcm-id">
 
 				<table class="form-table">
 
@@ -197,10 +120,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<label for="hsgcm-name">
 
-								<?php esc_html_e(
-									'Name',
-									'hsg-campaign-manager'
-								); ?>
+								<?php esc_html_e( 'Name', 'hsg-campaign-manager' ); ?>
 
 							</label>
 
@@ -223,10 +143,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<label for="hsgcm-status">
 
-								<?php esc_html_e(
-									'Status',
-									'hsg-campaign-manager'
-								); ?>
+								<?php esc_html_e( 'Status', 'hsg-campaign-manager' ); ?>
 
 							</label>
 
@@ -238,23 +155,54 @@ defined( 'ABSPATH' ) || exit;
 
 								<option value="draft">
 
-									<?php esc_html_e(
-										'Draft',
-										'hsg-campaign-manager'
-									); ?>
+									<?php esc_html_e( 'Draft', 'hsg-campaign-manager' ); ?>
 
 								</option>
 
 								<option value="publish">
 
-									<?php esc_html_e(
-										'Active',
-										'hsg-campaign-manager'
-									); ?>
+									<?php esc_html_e( 'Active', 'hsg-campaign-manager' ); ?>
 
 								</option>
 
 							</select>
+
+						</td>
+
+					</tr>
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-products">
+
+								<?php esc_html_e(
+									'Products',
+									'hsg-campaign-manager'
+								); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<select
+								id="hsgcm-products"
+								multiple
+								style="width:100%;">
+
+							</select>
+
+							<p class="description">
+
+								<?php esc_html_e(
+									'Products will be selectable in the next step.',
+									'hsg-campaign-manager'
+								); ?>
+
+							</p>
 
 						</td>
 
