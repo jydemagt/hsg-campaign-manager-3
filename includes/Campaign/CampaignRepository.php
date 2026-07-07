@@ -66,7 +66,7 @@ final class CampaignRepository {
 			$data = array();
 		}
 
-		return array_merge(
+		$data = array_merge(
 			array(
 				'id'         => $id,
 				'name'       => $post->post_title,
@@ -82,6 +82,27 @@ final class CampaignRepository {
 			),
 			$data
 		);
+
+		$product_list = array();
+
+		foreach ( $data['products'] as $product_id ) {
+
+			$product = wc_get_product( $product_id );
+
+			if ( ! $product ) {
+				continue;
+			}
+
+			$product_list[] = array(
+				'id'   => $product->get_id(),
+				'text' => $product->get_formatted_name(),
+			);
+
+		}
+
+		$data['products'] = $product_list;
+
+		return $data;
 
 	}
 
