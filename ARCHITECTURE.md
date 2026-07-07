@@ -25,6 +25,7 @@ Responsibilities:
 - Wait for `plugins_loaded` before initialization.
 - Check that WooCommerce is active before loading campaign functionality.
 - Register the campaign post type, AJAX controllers, product search controller, and admin UI.
+- Register the pricing service so WooCommerce price filters can call the pricing engine foundation.
 
 The plugin layer is orchestration only. It must not contain campaign business logic.
 
@@ -77,6 +78,11 @@ AJAX controllers are request adapters. They should not contain pricing rules, co
 Files:
 
 - `includes/Campaign/CampaignService.php`
+- `includes/Pricing/CampaignLoader.php`
+- `includes/Pricing/CampaignEvaluator.php`
+- `includes/Pricing/ConflictResolver.php`
+- `includes/Pricing/PriceCalculator.php`
+- `includes/Pricing/PricingService.php`
 
 Responsibilities:
 
@@ -102,6 +108,16 @@ Current campaign fields handled by the service:
 
 Current validation covers required campaign name, valid status, valid campaign type, valid date format, end date not earlier than start date, non-negative integer priority, required numeric campaign value, non-negative fixed values, and percentage discounts between 1 and 100. Future campaign rules must be added here before they are exposed through controllers or templates.
 
+Pricing service responsibilities:
+
+- `CampaignLoader` loads published campaigns, filters them by schedule, and normalizes them for pricing.
+- `CampaignEvaluator` determines whether a campaign applies to a product or variation.
+- `ConflictResolver` selects the winning campaign set using priority and stackability.
+- `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
+- `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float` and connects WooCommerce price filters to the pricing engine.
+
+Campaign admin validation remains in `CampaignService`. Runtime pricing decisions live in the pricing service classes.
+
 ## Repository Layer
 
 Files:
@@ -114,6 +130,7 @@ Responsibilities:
 - Register the internal campaign post type.
 - Retrieve campaign posts.
 - Load and merge campaign metadata defaults.
+- Load published campaigns and raw campaign data for service use.
 - Resolve assigned WooCommerce products into Select2-compatible data.
 - Create, update, delete, and count campaigns using WordPress APIs.
 
@@ -205,8 +222,9 @@ Current WooCommerce touchpoints:
 - Product search uses `product` and `product_variation` post types.
 - Products are resolved with `wc_get_product()`.
 - Product values are formatted through WooCommerce helpers such as `wc_format_decimal()`.
+- Pricing is connected through WooCommerce price filters for simple products and variations.
 
-The current plugin does not yet modify frontend product prices, cart prices, coupons, checkout behavior, orders, or analytics data.
+The current pricing foundation can calculate campaign-adjusted product prices from active campaigns. Coupon behavior, checkout-specific logic, orders, and analytics data are not implemented yet.
 
 ## Adding Future Features
 

@@ -21,6 +21,14 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Campaign metadata stored under `_hsgcm_campaign`.
 - Defaults for scheduling, priority, pricing type, coupon, stackability, and products.
 
+### Pricing Engine Foundation
+
+- Active published campaigns are loaded and filtered by schedule.
+- Campaign applicability is evaluated against products and parent products for variations.
+- Conflict resolution uses priority and stackability.
+- Price calculation supports fixed price, percentage discount, and fixed discount.
+- WooCommerce product and variation price filters call the pricing service.
+
 ### Admin Security Baseline
 
 - Admin nonce localized to JavaScript.
@@ -33,8 +41,8 @@ This roadmap reflects the current repository state. Items marked Completed are i
 ### Pricing Engine
 
 - Metadata fields exist for `type` and `value`.
-- Server-side frontend price application is not implemented yet.
-- Validation for pricing types and values needs to be expanded.
+- Foundation classes exist for loading, evaluating, resolving, and calculating campaign prices.
+- Further catalog, cart, checkout, caching, and edge-case hardening remains.
 
 ### Coupon Engine
 
@@ -45,18 +53,19 @@ This roadmap reflects the current repository state. Items marked Completed are i
 
 - Metadata fields exist for `start_date` and `end_date`.
 - The admin editor can save and reload schedule dates.
-- Active-window evaluation is not implemented yet.
+- Active-window evaluation is implemented for pricing campaign loading.
 
 ### Conflict Resolution
 
 - Metadata field exists for `priority`.
-- No active conflict detection or priority resolution is implemented yet.
+- Runtime priority and stackability resolution is implemented for pricing.
+- Admin conflict detection before publish is not implemented yet.
 
 ## Planned
 
 ### Frontend Pricing
 
-- Apply active campaign pricing to product loops, product pages, cart, and checkout.
+- Harden active campaign pricing across product loops, product pages, cart, and checkout.
 - Keep all price decisions in service classes.
 - Use WooCommerce hooks and public APIs only.
 

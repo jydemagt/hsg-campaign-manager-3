@@ -16,27 +16,31 @@ Acceptance criteria:
 - Coupon format is validated before save.
 - Stackability rules are validated before save.
 
-### Implement Frontend Pricing Engine
+### Harden Frontend Pricing Engine
 
 Description:
-Apply active campaign pricing to WooCommerce frontend product prices while keeping pricing decisions in services.
+Harden campaign pricing across WooCommerce product displays, cart, checkout, variable price ranges, and edge cases while keeping pricing decisions in services.
 
 Expected files:
 - `includes/Plugin.php`
-- `includes/Campaign/CampaignService.php`
 - `includes/Campaign/CampaignRepository.php`
-- New focused pricing integration/service files under `includes/`
+- `includes/Pricing/CampaignLoader.php`
+- `includes/Pricing/CampaignEvaluator.php`
+- `includes/Pricing/ConflictResolver.php`
+- `includes/Pricing/PriceCalculator.php`
+- `includes/Pricing/PricingService.php`
 
 Acceptance criteria:
-- Active published campaigns affect eligible product prices.
-- Draft, expired, and future campaigns do not affect prices.
 - Price behavior is consistent on product pages, loops, cart, and checkout.
+- Variable product price ranges are verified.
+- Sale price interactions are explicitly defined.
+- Campaign pricing behavior is covered by tests or documented manual checks.
 - WooCommerce core is not modified.
 
-### Implement Scheduling Rules
+### Harden Scheduling Rules
 
 Description:
-Use `start_date` and `end_date` to determine when a campaign is active.
+Harden schedule handling beyond pricing campaign loading, including timezone behavior and admin-facing status.
 
 Expected files:
 - `includes/Campaign/CampaignService.php`
@@ -45,9 +49,9 @@ Expected files:
 - `assets/js/admin.js`
 
 Acceptance criteria:
-- Campaigns can be scheduled from the admin UI.
-- Active campaign queries respect start and end dates.
-- Date validation prevents impossible ranges.
+- Active campaign queries consistently respect start and end dates.
+- Schedule behavior is verified against WordPress site timezone settings.
+- Admin UI clearly indicates scheduled, active, and expired campaigns.
 - Timezone behavior follows WordPress site settings.
 
 ### Implement Conflict Resolution
