@@ -7,7 +7,6 @@
 
 namespace HSGCM\Admin;
 
-use HSGCM\Campaign\CampaignRepository;
 use HSGCM\Campaign\CampaignService;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,19 +21,11 @@ final class AjaxController {
 	private CampaignService $service;
 
 	/**
-	 * Campaign repository.
-	 *
-	 * @var CampaignRepository
-	 */
-	private CampaignRepository $repository;
-
-	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 
-		$this->service    = new CampaignService();
-		$this->repository = new CampaignRepository();
+		$this->service = new CampaignService();
 
 		add_action( 'wp_ajax_hsgcm_get_campaign', array( $this, 'get_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_save_campaign', array( $this, 'save_campaign' ) );
@@ -44,6 +35,8 @@ final class AjaxController {
 
 	/**
 	 * Verify request.
+	 *
+	 * @return void
 	 */
 	private function verify(): void {
 
@@ -63,7 +56,9 @@ final class AjaxController {
 	}
 
 	/**
-	 * Load campaign.
+	 * Get campaign.
+	 *
+	 * @return void
 	 */
 	public function get_campaign(): void {
 
@@ -73,7 +68,7 @@ final class AjaxController {
 
 		$campaign = $this->service->get( $id );
 
-		if ( null === $campaign ) {
+		if ( ! $campaign ) {
 
 			wp_send_json_error(
 				array(
@@ -89,10 +84,23 @@ final class AjaxController {
 
 	/**
 	 * Save campaign.
+	 *
+	 * @return void
 	 */
 	public function save_campaign(): void {
 
 		$this->verify();
+
+		$products = array();
+
+		if ( isset( $_POST['products'] ) ) {
+
+			$products = array_map(
+				'absint',
+				(array) wp_unslash( $_POST['products'] )
+			);
+
+		}
 
 		$result = $this->service->save(
 			array(
@@ -102,7 +110,7 @@ final class AjaxController {
 				'start_date' => sanitize_text_field( wp_unslash( $_POST['start_date'] ?? '' ) ),
 				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
 				'priority'   => absint( $_POST['priority'] ?? 10 ),
-				'products'   => array(),
+				'products'   => $products,
 				'type'       => 'fixed_price',
 				'value'      => '',
 				'coupon'     => '',
@@ -120,14 +128,16 @@ final class AjaxController {
 
 	/**
 	 * Delete campaign.
+	 *
+	 * @return void
 	 */
 	public function delete_campaign(): void {
 
 		$this->verify();
 
-		$id = absint( $_POST['id'] ?? 0 );
-
-		$result = $this->service->delete( $id );
+		$result = $this->service->delete(
+			absint( $_POST['id'] ?? 0 )
+		);
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( $result );
