@@ -11,8 +11,6 @@
 
 		constructor() {
 
-			console.log('HSGCM loaded');
-
 			this.form = $('#hsgcm-campaign-form');
 
 			if (!this.form.length) {
@@ -20,7 +18,6 @@
 			}
 
 			this.initProductSelector();
-
 			this.bindEvents();
 
 		}
@@ -69,19 +66,14 @@
 						$.each(data, function (id, text) {
 
 							results.push({
-
 								id: id,
-
 								text: text
-
 							});
 
 						});
 
 						return {
-
 							results: results
-
 						};
 
 					}
@@ -129,10 +121,11 @@
 			this.form.trigger('reset');
 
 			$('#hsgcm-id').val('');
-
 			$('#hsgcm-status').val('draft');
 
-			$('#hsgcm-products').val(null).trigger('change');
+			$('#hsgcm-products')
+				.empty()
+				.trigger('change');
 
 			this.showMessage('', '');
 
@@ -156,21 +149,14 @@
 				{
 
 					action: 'hsgcm_save_campaign',
-
 					nonce: hsgcmAdmin.nonce,
 
 					id: $('#hsgcm-id').val(),
-
 					name: $('#hsgcm-name').val(),
-
 					status: $('#hsgcm-status').val(),
-
 					products: $('#hsgcm-products').val(),
-
 					start_date: '',
-
 					end_date: '',
-
 					priority: 10
 
 				}
@@ -201,7 +187,7 @@
 
 					location.reload();
 
-				}, 500);
+				}, 400);
 
 			})
 
@@ -234,9 +220,7 @@
 				{
 
 					action: 'hsgcm_get_campaign',
-
 					nonce: hsgcmAdmin.nonce,
-
 					id: id
 
 				}
@@ -259,10 +243,32 @@
 				const c = response.data;
 
 				$('#hsgcm-id').val(c.id);
-
 				$('#hsgcm-name').val(c.name);
-
 				$('#hsgcm-status').val(c.status);
+
+				$('#hsgcm-products')
+					.empty();
+
+				if (Array.isArray(c.products)) {
+
+					c.products.forEach(function (product) {
+
+						const option = new Option(
+							product.text,
+							product.id,
+							true,
+							true
+						);
+
+						$('#hsgcm-products')
+							.append(option);
+
+					});
+
+				}
+
+				$('#hsgcm-products')
+					.trigger('change');
 
 			});
 
@@ -288,9 +294,7 @@
 				{
 
 					action: 'hsgcm_delete_campaign',
-
 					nonce: hsgcmAdmin.nonce,
-
 					id: id
 
 				}
@@ -328,11 +332,13 @@
 			}
 
 			$('.hsgcm-editor').prepend(
+
 				'<div class="notice notice-' +
 				type +
 				' hsgcm-message"><p>' +
 				message +
 				'</p></div>'
+
 			);
 
 		}
