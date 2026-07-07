@@ -102,6 +102,12 @@ final class AjaxController {
 
 		}
 
+		$priority = $_POST['priority'] ?? '0';
+
+		if ( ! is_scalar( $priority ) ) {
+			$priority = '';
+		}
+
 		$result = $this->service->save(
 			array(
 				'id'         => absint( $_POST['id'] ?? 0 ),
@@ -109,7 +115,7 @@ final class AjaxController {
 				'status'     => sanitize_text_field( wp_unslash( $_POST['status'] ?? 'draft' ) ),
 				'start_date' => sanitize_text_field( wp_unslash( $_POST['start_date'] ?? '' ) ),
 				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
-				'priority'   => absint( $_POST['priority'] ?? 10 ),
+				'priority'   => sanitize_text_field( wp_unslash( (string) $priority ) ),
 				'products'   => $products,
 
 				// Nye felter

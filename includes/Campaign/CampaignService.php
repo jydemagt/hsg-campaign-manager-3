@@ -68,6 +68,8 @@ final class CampaignService {
 			return $validation;
 		}
 
+		$campaign = $this->normalize( $campaign );
+
 		if ( $campaign['id'] > 0 ) {
 
 			if ( ! $this->repository->update( $campaign['id'], $campaign ) ) {
@@ -139,19 +141,40 @@ final class CampaignService {
 	 */
 	private function sanitize( array $campaign ): array {
 
+		$priority = $campaign['priority'] ?? '0';
+
+		if ( ! is_scalar( $priority ) ) {
+			$priority = '';
+		}
+
 		return array(
 			'id'         => absint( $campaign['id'] ?? 0 ),
 			'name'       => sanitize_text_field( $campaign['name'] ?? '' ),
 			'status'     => in_array( $campaign['status'] ?? 'draft', array( 'draft', 'publish' ), true ) ? $campaign['status'] : 'draft',
 			'start_date' => sanitize_text_field( $campaign['start_date'] ?? '' ),
 			'end_date'   => sanitize_text_field( $campaign['end_date'] ?? '' ),
-			'priority'   => absint( $campaign['priority'] ?? 10 ),
+			'priority'   => sanitize_text_field( (string) $priority ),
 			'products'   => array_map( 'absint', (array) ( $campaign['products'] ?? array() ) ),
 			'type'       => sanitize_key( $campaign['type'] ?? 'fixed_price' ),
 			'value'      => wc_format_decimal( $campaign['value'] ?? '' ),
 			'coupon'     => sanitize_text_field( $campaign['coupon'] ?? '' ),
 			'stackable'  => ! empty( $campaign['stackable'] ),
 		);
+
+	}
+
+	/**
+	 * Normalize campaign values for storage.
+	 *
+	 * @param array $campaign Campaign.
+	 *
+	 * @return array
+	 */
+	private function normalize( array $campaign ): array {
+
+		$campaign['priority'] = (int) $campaign['priority'];
+
+		return $campaign;
 
 	}
 
@@ -173,9 +196,37 @@ final class CampaignService {
 
 		}
 
+		if ( ! $this->is_valid_priority( $campaign['priority'] ) ) {
+
+			return array(
+				'success' => false,
+				'message' => __( 'Priority must be a non-negative integer.', 'hsg-campaign-manager' ),
+			);
+
+		}
+
 		return array(
 			'success' => true,
 		);
+
+	}
+
+	/**
+	 * Check whether a priority value is a non-negative integer.
+	 *
+	 * @param mixed $priority Priority value.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_priority( $priority ): bool {
+
+		if ( ! is_scalar( $priority ) ) {
+			return false;
+		}
+
+		$priority = trim( (string) $priority );
+
+		return '' !== $priority && ctype_digit( $priority );
 
 	}
 

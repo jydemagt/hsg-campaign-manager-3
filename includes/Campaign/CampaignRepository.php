@@ -73,7 +73,7 @@ final class CampaignRepository {
 				'status'     => $post->post_status,
 				'start_date' => '',
 				'end_date'   => '',
-				'priority'   => 10,
+				'priority'   => 0,
 				'products'   => array(),
 				'type'       => 'fixed_price',
 				'value'      => '',

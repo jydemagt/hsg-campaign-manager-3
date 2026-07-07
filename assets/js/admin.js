@@ -152,7 +152,7 @@
 
 					end_date: '',
 
-					priority: 10
+					priority: 0
 
 				}
 

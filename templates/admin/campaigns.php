@@ -210,6 +210,13 @@ defined( 'ABSPATH' ) || exit;
 
 				</table>
 
+				<p class="description">
+					<?php esc_html_e(
+						'Higher priority values win when campaigns overlap. Priority starts at 0 and has no upper limit.',
+						'hsg-campaign-manager'
+					); ?>
+				</p>
+
 				<p>
 
 					<button
