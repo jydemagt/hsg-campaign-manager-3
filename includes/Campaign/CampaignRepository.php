@@ -83,6 +83,11 @@ final class CampaignRepository {
 			$data
 		);
 
+		$data['id']       = $id;
+		$data['name']     = $post->post_title;
+		$data['status']   = $post->post_status;
+		$data['products'] = is_array( $data['products'] ) ? $data['products'] : array();
+
 		$product_list = array();
 
 		foreach ( $data['products'] as $product_id ) {
@@ -127,6 +132,8 @@ final class CampaignRepository {
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
 		}
+
+		$campaign['id'] = (int) $post_id;
 
 		update_post_meta(
 			$post_id,

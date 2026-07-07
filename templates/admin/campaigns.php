@@ -112,6 +112,8 @@ defined( 'ABSPATH' ) || exit;
 					type="hidden"
 					id="hsgcm-id">
 
+				<h3><?php esc_html_e( 'General', 'hsg-campaign-manager' ); ?></h3>
+
 				<table class="form-table">
 
 					<tr>
@@ -175,6 +177,37 @@ defined( 'ABSPATH' ) || exit;
 
 						<th>
 
+							<label for="hsgcm-priority">
+
+								<?php esc_html_e( 'Priority', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="number"
+								id="hsgcm-priority"
+								min="0"
+								step="1"
+								value="10">
+
+						</td>
+
+					</tr>
+
+				</table>
+
+				<h3><?php esc_html_e( 'Products', 'hsg-campaign-manager' ); ?></h3>
+
+				<table class="form-table">
+
+					<tr>
+
+						<th>
+
 							<label for="hsgcm-products">
 
 								<?php esc_html_e(
@@ -198,11 +231,189 @@ defined( 'ABSPATH' ) || exit;
 							<p class="description">
 
 								<?php esc_html_e(
-									'Products will be selectable in the next step.',
+									'Search for products or variations included in this campaign.',
 									'hsg-campaign-manager'
 								); ?>
 
 							</p>
+
+						</td>
+
+					</tr>
+
+				</table>
+
+				<h3><?php esc_html_e( 'Pricing', 'hsg-campaign-manager' ); ?></h3>
+
+				<table class="form-table">
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-type">
+
+								<?php esc_html_e( 'Campaign type', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<select id="hsgcm-type">
+
+								<option value="fixed_price">
+
+									<?php esc_html_e( 'Fixed price', 'hsg-campaign-manager' ); ?>
+
+								</option>
+
+								<option value="percentage_discount">
+
+									<?php esc_html_e( 'Percentage discount', 'hsg-campaign-manager' ); ?>
+
+								</option>
+
+								<option value="fixed_discount">
+
+									<?php esc_html_e( 'Fixed discount', 'hsg-campaign-manager' ); ?>
+
+								</option>
+
+							</select>
+
+						</td>
+
+					</tr>
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-value">
+
+								<?php esc_html_e( 'Campaign value', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="number"
+								id="hsgcm-value"
+								min="0"
+								step="0.01"
+								inputmode="decimal">
+
+						</td>
+
+					</tr>
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-coupon">
+
+								<?php esc_html_e( 'Coupon code', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="text"
+								id="hsgcm-coupon"
+								class="regular-text">
+
+						</td>
+
+					</tr>
+
+				</table>
+
+				<h3><?php esc_html_e( 'Scheduling', 'hsg-campaign-manager' ); ?></h3>
+
+				<table class="form-table">
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-start-date">
+
+								<?php esc_html_e( 'Start date', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="date"
+								id="hsgcm-start-date">
+
+						</td>
+
+					</tr>
+
+					<tr>
+
+						<th>
+
+							<label for="hsgcm-end-date">
+
+								<?php esc_html_e( 'End date', 'hsg-campaign-manager' ); ?>
+
+							</label>
+
+						</th>
+
+						<td>
+
+							<input
+								type="date"
+								id="hsgcm-end-date">
+
+						</td>
+
+					</tr>
+
+				</table>
+
+				<h3><?php esc_html_e( 'Behaviour', 'hsg-campaign-manager' ); ?></h3>
+
+				<table class="form-table">
+
+					<tr>
+
+						<th>
+
+							<?php esc_html_e( 'Stacking', 'hsg-campaign-manager' ); ?>
+
+						</th>
+
+						<td>
+
+							<label for="hsgcm-stackable">
+
+								<input
+									type="checkbox"
+									id="hsgcm-stackable"
+									value="1">
+
+								<?php esc_html_e(
+									'Allow campaign to be combined with other campaigns.',
+									'hsg-campaign-manager'
+								); ?>
+
+							</label>
 
 						</td>
 
