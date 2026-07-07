@@ -9,6 +9,7 @@ namespace HSGCM;
 
 use HSGCM\Admin\Admin;
 use HSGCM\Admin\AjaxController;
+use HSGCM\Admin\ProductSearchController;
 use HSGCM\Campaign\Campaign;
 
 defined( 'ABSPATH' ) || exit;
@@ -50,7 +51,7 @@ final class Plugin {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialise plugin.
 	 *
 	 * @return void
 	 */
@@ -71,8 +72,9 @@ final class Plugin {
 		// Register campaign post type.
 		new Campaign();
 
-		// Register AJAX endpoints.
+		// Register AJAX controllers.
 		new AjaxController();
+		new ProductSearchController();
 
 		// Load admin.
 		if ( is_admin() ) {
