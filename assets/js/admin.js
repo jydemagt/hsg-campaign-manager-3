@@ -17,23 +17,23 @@
 				return;
 			}
 
-			this.initProductSelector();
+			this.initProductSearch();
 			this.bindEvents();
 
 		}
 
 		/**
-		 * Initialise WooCommerce product selector.
+		 * Initialise product selector.
 		 */
-		initProductSelector() {
+		initProductSearch() {
 
-			$('#hsgcm-products').selectWoo({
+			$('#hsgcm-products').select2({
 
 				width: '100%',
 
 				placeholder: 'Search products...',
 
-				allowClear: true,
+				minimumInputLength: 2,
 
 				ajax: {
 
@@ -41,19 +41,17 @@
 
 					dataType: 'json',
 
-					delay: 250,
+					delay: 300,
 
 					data: function (params) {
 
 						return {
 
-							action: 'woocommerce_json_search_products_and_variations',
+							action: 'hsgcm_product_search',
 
-							security: wc_enhanced_select_params.search_products_nonce,
+							nonce: hsgcmAdmin.nonce,
 
-							term: params.term || '',
-
-							limit: 20
+							term: params.term
 
 						};
 
@@ -61,22 +59,11 @@
 
 					processResults: function (data) {
 
-						const results = [];
+						return data;
 
-						$.each(data, function (id, text) {
+					},
 
-							results.push({
-								id: id,
-								text: text
-							});
-
-						});
-
-						return {
-							results: results
-						};
-
-					}
+					cache: true
 
 				}
 
@@ -121,10 +108,11 @@
 			this.form.trigger('reset');
 
 			$('#hsgcm-id').val('');
+
 			$('#hsgcm-status').val('draft');
 
 			$('#hsgcm-products')
-				.empty()
+				.val(null)
 				.trigger('change');
 
 			this.showMessage('', '');
@@ -149,14 +137,21 @@
 				{
 
 					action: 'hsgcm_save_campaign',
+
 					nonce: hsgcmAdmin.nonce,
 
 					id: $('#hsgcm-id').val(),
+
 					name: $('#hsgcm-name').val(),
+
 					status: $('#hsgcm-status').val(),
+
 					products: $('#hsgcm-products').val(),
+
 					start_date: '',
+
 					end_date: '',
+
 					priority: 10
 
 				}
@@ -220,7 +215,9 @@
 				{
 
 					action: 'hsgcm_get_campaign',
+
 					nonce: hsgcmAdmin.nonce,
+
 					id: id
 
 				}
@@ -243,32 +240,10 @@
 				const c = response.data;
 
 				$('#hsgcm-id').val(c.id);
+
 				$('#hsgcm-name').val(c.name);
+
 				$('#hsgcm-status').val(c.status);
-
-				$('#hsgcm-products')
-					.empty();
-
-				if (Array.isArray(c.products)) {
-
-					c.products.forEach(function (product) {
-
-						const option = new Option(
-							product.text,
-							product.id,
-							true,
-							true
-						);
-
-						$('#hsgcm-products')
-							.append(option);
-
-					});
-
-				}
-
-				$('#hsgcm-products')
-					.trigger('change');
 
 			});
 
@@ -294,7 +269,9 @@
 				{
 
 					action: 'hsgcm_delete_campaign',
+
 					nonce: hsgcmAdmin.nonce,
+
 					id: id
 
 				}
@@ -332,13 +309,11 @@
 			}
 
 			$('.hsgcm-editor').prepend(
-
 				'<div class="notice notice-' +
 				type +
 				' hsgcm-message"><p>' +
 				message +
 				'</p></div>'
-
 			);
 
 		}
