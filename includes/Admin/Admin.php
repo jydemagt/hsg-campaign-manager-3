@@ -58,9 +58,9 @@ final class Admin {
 	}
 
 	/**
-	 * Load CSS & JavaScript.
+	 * Load assets.
 	 *
-	 * @param string $hook Current admin page.
+	 * @param string $hook Current page hook.
 	 *
 	 * @return void
 	 */
@@ -70,17 +70,29 @@ final class Admin {
 			return;
 		}
 
+		// WooCommerce Select2.
+		wp_enqueue_script( 'selectWoo' );
+		wp_enqueue_style( 'select2' );
+
+		// WooCommerce product search.
+		wp_enqueue_script( 'wc-enhanced-select' );
+		wp_enqueue_style( 'woocommerce_admin_styles' );
+
 		wp_enqueue_style(
 			'hsgcm-admin',
 			HSGCM_URL . 'assets/css/admin.css',
-			array(),
+			array( 'woocommerce_admin_styles' ),
 			HSGCM_VERSION
 		);
 
 		wp_enqueue_script(
 			'hsgcm-admin',
 			HSGCM_URL . 'assets/js/admin.js',
-			array( 'jquery' ),
+			array(
+				'jquery',
+				'selectWoo',
+				'wc-enhanced-select',
+			),
 			HSGCM_VERSION,
 			true
 		);
@@ -97,7 +109,7 @@ final class Admin {
 	}
 
 	/**
-	 * Render admin page.
+	 * Render page.
 	 *
 	 * @return void
 	 */
