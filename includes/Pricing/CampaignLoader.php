@@ -126,6 +126,10 @@ final class CampaignLoader {
 	 */
 	private function has_pricing( array $campaign ): bool {
 
+		if ( 'multi_buy' === $campaign['type'] ) {
+			return $this->has_multi_buy_pricing( $campaign );
+		}
+
 		if ( ! in_array( $campaign['type'], array( 'fixed_price', 'percentage_discount', 'fixed_discount' ), true ) ) {
 			return false;
 		}
@@ -145,6 +149,31 @@ final class CampaignLoader {
 		}
 
 		return (float) $campaign['value'] >= 0;
+
+	}
+
+	/**
+	 * Determine whether campaign has usable multi-buy data.
+	 *
+	 * @param array $campaign Campaign.
+	 *
+	 * @return bool
+	 */
+	private function has_multi_buy_pricing( array $campaign ): bool {
+
+		if ( empty( array_filter( (array) ( $campaign['products'] ?? array() ) ) ) ) {
+			return false;
+		}
+
+		if ( ! $this->is_valid_multi_buy_quantity( $campaign['quantity'] ?? 0 ) ) {
+			return false;
+		}
+
+		if ( '' === ( $campaign['bundle_price'] ?? '' ) || ! is_numeric( $campaign['bundle_price'] ) ) {
+			return false;
+		}
+
+		return (float) $campaign['bundle_price'] > 0;
 
 	}
 
@@ -184,6 +213,8 @@ final class CampaignLoader {
 			'id'         => absint( $campaign['id'] ?? 0 ),
 			'name'       => sanitize_text_field( $campaign['name'] ?? '' ),
 			'priority'   => absint( $campaign['priority'] ?? 0 ),
+			'quantity'   => absint( $campaign['quantity'] ?? 2 ),
+			'bundle_price' => (float) wc_format_decimal( $campaign['bundle_price'] ?? 0 ),
 			'products'   => array_values(
 				array_filter(
 					array_map( 'absint', (array) ( $campaign['products'] ?? array() ) )
@@ -195,6 +226,25 @@ final class CampaignLoader {
 			'start_date' => sanitize_text_field( $campaign['start_date'] ?? '' ),
 			'end_date'   => sanitize_text_field( $campaign['end_date'] ?? '' ),
 		);
+
+	}
+
+	/**
+	 * Validate a quantity string for multi-buy campaigns.
+	 *
+	 * @param mixed $quantity Quantity value.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_multi_buy_quantity( $quantity ): bool {
+
+		if ( ! is_scalar( $quantity ) ) {
+			return false;
+		}
+
+		$quantity = trim( (string) $quantity );
+
+		return '' !== $quantity && ctype_digit( $quantity ) && (int) $quantity >= 2;
 
 	}
 

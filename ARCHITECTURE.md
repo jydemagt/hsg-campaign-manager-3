@@ -82,6 +82,7 @@ Files:
 - `includes/Pricing/ConflictResolver.php`
 - `includes/Pricing/PriceCalculator.php`
 - `includes/Pricing/PricingService.php`
+- `includes/Pricing/CartPricingService.php`
 
 Responsibilities:
 
@@ -99,6 +100,8 @@ Current campaign fields handled by the service:
 - `start_date`
 - `end_date`
 - `priority`
+- `quantity`
+- `bundle_price`
 - `products`
 - `type`
 - `value`
@@ -114,6 +117,7 @@ Pricing service responsibilities:
 - `ConflictResolver` sorts campaigns by descending priority, then by descending ID, and applies stackability rules.
 - `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
 - `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float` and connects WooCommerce price filters to the pricing engine.
+- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`.
 
 Campaign admin validation remains in `CampaignService`. Runtime pricing decisions live in the pricing service classes.
 
@@ -136,6 +140,8 @@ Responsibilities:
 Repository defaults are the source of truth for stored campaign shape. When metadata is missing, the repository returns:
 
 - `priority`: `0`
+- `quantity`: `2`
+- `bundle_price`: empty price value
 - `products`: empty array
 - `type`: `fixed_price`
 - `value`: empty string
@@ -211,7 +217,8 @@ Pricing runtime:
 3. `PricingService::getProductPrice()` loads active campaigns.
 4. `CampaignEvaluator` keeps only campaigns that apply to the product or parent variation.
 5. `ConflictResolver` orders campaigns by descending priority and respects stackability.
-6. `PriceCalculator` applies the winning campaign set.
+6. `PriceCalculator` applies the winning campaign set for standard pricing.
+7. `CartPricingService` applies complete multi-buy bundles in cart and checkout through `woocommerce_before_calculate_totals`.
 
 ## Campaign Storage
 
@@ -225,7 +232,7 @@ Campaigns are stored as WordPress posts:
 Campaign details are stored in a single post meta array:
 
 - Meta key: `_hsgcm_campaign`
-- Fields: `id`, `name`, `status`, `start_date`, `end_date`, `priority`, `products`, `type`, `value`, `coupon`, `stackable`
+- Fields: `id`, `name`, `status`, `start_date`, `end_date`, `priority`, `quantity`, `bundle_price`, `products`, `type`, `value`, `coupon`, `stackable`
 
 The repository merges stored metadata with defaults when loading a campaign. Product IDs are stored in metadata and converted to formatted product names for admin editing.
 
@@ -244,8 +251,9 @@ Current WooCommerce touchpoints:
 - Products are resolved with `wc_get_product()`.
 - Product values are formatted through WooCommerce helpers such as `wc_format_decimal()`.
 - Pricing is connected through WooCommerce price filters for simple products and variations.
+- Multi-buy bundle pricing is applied in cart and checkout with `woocommerce_before_calculate_totals`.
 
-The current pricing foundation can calculate campaign-adjusted product prices from active campaigns. Coupon behavior, checkout-specific logic, order analytics, and REST exposure are not implemented yet.
+The current pricing foundation can calculate campaign-adjusted product prices from active campaigns and apply multi-buy bundles in cart and checkout. Coupon behavior, order analytics, and REST exposure are not implemented yet.
 
 ## Adding Future Features
 

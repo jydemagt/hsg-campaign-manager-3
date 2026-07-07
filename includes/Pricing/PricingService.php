@@ -40,6 +40,13 @@ final class PricingService {
 	private PriceCalculator $calculator;
 
 	/**
+	 * Cart pricing service.
+	 *
+	 * @var CartPricingService
+	 */
+	private CartPricingService $cart_pricing;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -48,6 +55,12 @@ final class PricingService {
 		$this->evaluator  = new CampaignEvaluator();
 		$this->resolver   = new ConflictResolver();
 		$this->calculator = new PriceCalculator();
+		$this->cart_pricing = new CartPricingService(
+			$this,
+			$this->loader,
+			$this->evaluator,
+			$this->resolver
+		);
 
 		add_filter( 'woocommerce_product_get_price', array( $this, 'filter_price' ), 20, 2 );
 		add_filter( 'woocommerce_product_variation_get_price', array( $this, 'filter_price' ), 20, 2 );
@@ -75,6 +88,10 @@ final class PricingService {
 		$applicable = array();
 
 		foreach ( $this->loader->active() as $campaign ) {
+
+			if ( 'multi_buy' === $campaign->type ) {
+				continue;
+			}
 
 			if ( $this->evaluator->applies( $campaign, $product_id ) ) {
 				$applicable[] = $campaign;

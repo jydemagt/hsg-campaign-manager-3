@@ -30,6 +30,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Conflict resolution uses higher priority values first and respects stackability.
 - Price calculation supports fixed price, percentage discount, and fixed discount.
 - WooCommerce product and variation price filters call the pricing service.
+- Multi-buy runtime pricing applies complete bundles in cart and checkout.
 
 ### Admin Security Baseline
 
@@ -44,8 +45,8 @@ This roadmap reflects the current repository state. Items marked Completed are i
 
 - Metadata fields exist for `type` and `value`.
 - Foundation classes exist for loading, evaluating, resolving, and calculating campaign prices.
-- Multi-buy campaigns are stored and validated, but runtime pricing does not apply them yet.
-- Further catalog, cart, checkout, caching, and edge-case hardening remains.
+- Multi-buy campaigns are stored, validated, and priced at cart and checkout time.
+- Further catalog, caching, and edge-case hardening remains.
 
 ### Coupon Engine
 
