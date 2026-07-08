@@ -210,21 +210,22 @@ final class CampaignLoader {
 	private function normalize( array $campaign ): object {
 
 		return (object) array(
-			'id'         => absint( $campaign['id'] ?? 0 ),
-			'name'       => sanitize_text_field( $campaign['name'] ?? '' ),
-			'priority'   => absint( $campaign['priority'] ?? 0 ),
-			'quantity'   => absint( $campaign['quantity'] ?? 2 ),
+			'id'           => absint( $campaign['id'] ?? 0 ),
+			'name'         => sanitize_text_field( $campaign['name'] ?? '' ),
+			'priority'     => absint( $campaign['priority'] ?? 0 ),
+			'quantity'     => absint( $campaign['quantity'] ?? 2 ),
 			'bundle_price' => (float) wc_format_decimal( $campaign['bundle_price'] ?? 0 ),
-			'products'   => array_values(
+			'products'     => array_values(
 				array_filter(
 					array_map( 'absint', (array) ( $campaign['products'] ?? array() ) )
 				)
 			),
-			'type'       => sanitize_key( $campaign['type'] ?? 'fixed_price' ),
-			'value'      => (float) wc_format_decimal( $campaign['value'] ?? 0 ),
-			'stackable'  => ! empty( $campaign['stackable'] ),
-			'start_date' => sanitize_text_field( $campaign['start_date'] ?? '' ),
-			'end_date'   => sanitize_text_field( $campaign['end_date'] ?? '' ),
+			'type'         => sanitize_key( $campaign['type'] ?? 'fixed_price' ),
+			'value'        => (float) wc_format_decimal( $campaign['value'] ?? 0 ),
+			'coupon'       => sanitize_text_field( $campaign['coupon'] ?? '' ),
+			'stackable'    => ! empty( $campaign['stackable'] ),
+			'start_date'   => sanitize_text_field( $campaign['start_date'] ?? '' ),
+			'end_date'     => sanitize_text_field( $campaign['end_date'] ?? '' ),
 		);
 
 	}

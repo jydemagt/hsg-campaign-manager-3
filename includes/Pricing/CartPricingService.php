@@ -12,52 +12,32 @@ defined( 'ABSPATH' ) || exit;
 final class CartPricingService {
 
 	/**
-	 * Base pricing service.
+	 * Coupon service.
 	 *
-	 * @var PricingService
+	 * @var CouponService
 	 */
-	private PricingService $pricing;
+	private CouponService $coupon_service;
 
 	/**
-	 * Campaign loader.
+	 * Price calculator.
 	 *
-	 * @var CampaignLoader
+	 * @var PriceCalculator
 	 */
-	private CampaignLoader $loader;
-
-	/**
-	 * Campaign evaluator.
-	 *
-	 * @var CampaignEvaluator
-	 */
-	private CampaignEvaluator $evaluator;
-
-	/**
-	 * Conflict resolver.
-	 *
-	 * @var ConflictResolver
-	 */
-	private ConflictResolver $resolver;
+	private PriceCalculator $calculator;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param PricingService    $pricing   Pricing service.
-	 * @param CampaignLoader    $loader    Campaign loader.
-	 * @param CampaignEvaluator $evaluator Campaign evaluator.
-	 * @param ConflictResolver  $resolver  Conflict resolver.
+	 * @param CouponService    $coupon_service Coupon service.
+	 * @param PriceCalculator $calculator Price calculator.
 	 */
 	public function __construct(
-		PricingService $pricing,
-		CampaignLoader $loader,
-		CampaignEvaluator $evaluator,
-		ConflictResolver $resolver
+		CouponService $coupon_service,
+		PriceCalculator $calculator
 	) {
 
-		$this->pricing   = $pricing;
-		$this->loader    = $loader;
-		$this->evaluator = $evaluator;
-		$this->resolver  = $resolver;
+		$this->coupon_service = $coupon_service;
+		$this->calculator     = $calculator;
 
 		add_action(
 			'woocommerce_before_calculate_totals',
@@ -92,7 +72,8 @@ final class CartPricingService {
 			return;
 		}
 
-		$groups = $this->collect_groups( $cart );
+		$coupon_codes = $this->coupon_service->getAppliedCouponCodes();
+		$groups       = $this->collect_groups( $cart, $coupon_codes );
 
 		foreach ( $groups as $campaign_id => $group ) {
 
@@ -110,10 +91,14 @@ final class CartPricingService {
 	 * Collect multi-buy groups from the cart.
 	 *
 	 * @param \WC_Cart $cart Cart.
+	 * @param array    $coupon_codes Coupon codes.
 	 *
 	 * @return array
 	 */
-	private function collect_groups( \WC_Cart $cart ): array {
+	private function collect_groups(
+		\WC_Cart $cart,
+		array $coupon_codes
+	): array {
 
 		$groups = array();
 
@@ -123,17 +108,25 @@ final class CartPricingService {
 				unset( $cart->cart_contents[ $cart_item_key ]['hsgcm_multi_buy_notice'] );
 			}
 
-			$campaign = $this->resolve_multi_buy_campaign( $cart_item );
-
 			$product = $cart_item['data'] ?? null;
 
 			if ( ! $product instanceof \WC_Product ) {
 				continue;
 			}
 
-			$base_price = $this->get_base_price( $product, $campaign );
+			$resolved_campaigns = $this->coupon_service->resolveCampaignsForProduct(
+				(int) $product->get_id(),
+				$coupon_codes
+			);
+
+			$base_price = $this->get_base_price(
+				$product,
+				$resolved_campaigns
+			);
 
 			$product->set_price( $base_price );
+
+			$campaign = $this->find_multi_buy_campaign( $resolved_campaigns );
 
 			if ( ! $campaign ) {
 				continue;
@@ -141,8 +134,8 @@ final class CartPricingService {
 
 			$groups[ $campaign->id ]['campaign'] = $campaign;
 			$groups[ $campaign->id ]['items'][] = array(
-				'key'       => $cart_item_key,
-				'quantity'  => max( 0, (int) ( $cart_item['quantity'] ?? 0 ) ),
+				'key'        => $cart_item_key,
+				'quantity'   => max( 0, (int) ( $cart_item['quantity'] ?? 0 ) ),
 				'product_id' => (int) $product->get_id(),
 				'base_price' => $base_price,
 			);
@@ -161,37 +154,13 @@ final class CartPricingService {
 	/**
 	 * Resolve the winning multi-buy campaign for a cart item.
 	 *
-	 * @param array $cart_item Cart item.
+	 * @param array $campaigns Campaigns.
 	 *
 	 * @return object|null
 	 */
-	private function resolve_multi_buy_campaign( array $cart_item ): ?object {
+	private function find_multi_buy_campaign( array $campaigns ): ?object {
 
-		$product = $cart_item['data'] ?? null;
-
-		if ( ! $product instanceof \WC_Product ) {
-			return null;
-		}
-
-		$applicable = array();
-
-		foreach ( $this->loader->active() as $campaign ) {
-
-			if ( ! $this->evaluator->applies( $campaign, (int) $product->get_id() ) ) {
-				continue;
-			}
-
-			$applicable[] = $campaign;
-
-		}
-
-		if ( empty( $applicable ) ) {
-			return null;
-		}
-
-		$resolved = $this->resolver->resolve( $applicable );
-
-		foreach ( $resolved as $campaign ) {
+		foreach ( $campaigns as $campaign ) {
 			if ( 'multi_buy' === $campaign->type ) {
 				return $campaign;
 			}
@@ -204,14 +173,14 @@ final class CartPricingService {
 	/**
 	 * Get the base price for a cart item.
 	 *
-	 * @param \WC_Product $product   Product.
-	 * @param object|null $campaign  Campaign.
+	 * @param \WC_Product $product Product.
+	 * @param array       $campaigns Campaigns.
 	 *
 	 * @return float
 	 */
 	private function get_base_price(
 		\WC_Product $product,
-		?object $campaign
+		array $campaigns
 	): float {
 
 		$regular_price = $product->get_regular_price( 'edit' );
@@ -224,14 +193,24 @@ final class CartPricingService {
 			return 0.0;
 		}
 
-		if ( null === $campaign || ! empty( $campaign->stackable ) ) {
-			return $this->pricing->getProductPrice(
-				(int) $product->get_id(),
-				(float) $regular_price
-			);
+		$pricing_campaigns = array_filter(
+			$campaigns,
+			static function ( object $campaign ): bool {
+				return (
+					'multi_buy' !== $campaign->type &&
+					empty( $campaign->coupon )
+				);
+			}
+		);
+
+		if ( empty( $pricing_campaigns ) ) {
+			return (float) $regular_price;
 		}
 
-		return (float) $regular_price;
+		return $this->calculator->calculate(
+			(float) $regular_price,
+			$pricing_campaigns
+		);
 
 	}
 

@@ -12,25 +12,11 @@ defined( 'ABSPATH' ) || exit;
 final class PricingService {
 
 	/**
-	 * Campaign loader.
+	 * Coupon service.
 	 *
-	 * @var CampaignLoader
+	 * @var CouponService
 	 */
-	private CampaignLoader $loader;
-
-	/**
-	 * Campaign evaluator.
-	 *
-	 * @var CampaignEvaluator
-	 */
-	private CampaignEvaluator $evaluator;
-
-	/**
-	 * Conflict resolver.
-	 *
-	 * @var ConflictResolver
-	 */
-	private ConflictResolver $resolver;
+	private CouponService $coupon_service;
 
 	/**
 	 * Price calculator.
@@ -51,15 +37,11 @@ final class PricingService {
 	 */
 	public function __construct() {
 
-		$this->loader     = new CampaignLoader();
-		$this->evaluator  = new CampaignEvaluator();
-		$this->resolver   = new ConflictResolver();
-		$this->calculator = new PriceCalculator();
-		$this->cart_pricing = new CartPricingService(
-			$this,
-			$this->loader,
-			$this->evaluator,
-			$this->resolver
+		$this->coupon_service = new CouponService();
+		$this->calculator     = new PriceCalculator();
+		$this->cart_pricing   = new CartPricingService(
+			$this->coupon_service,
+			$this->calculator
 		);
 
 		add_filter( 'woocommerce_product_get_price', array( $this, 'filter_price' ), 20, 2 );
@@ -85,21 +67,15 @@ final class PricingService {
 			return $regular_price;
 		}
 
-		$applicable = array();
-
-		foreach ( $this->loader->active() as $campaign ) {
-
-			if ( 'multi_buy' === $campaign->type ) {
-				continue;
+		$campaigns = array_filter(
+			$this->coupon_service->resolveCampaignsForProduct( $product_id ),
+			static function ( object $campaign ): bool {
+				return (
+					'multi_buy' !== $campaign->type &&
+					empty( $campaign->coupon )
+				);
 			}
-
-			if ( $this->evaluator->applies( $campaign, $product_id ) ) {
-				$applicable[] = $campaign;
-			}
-
-		}
-
-		$campaigns = $this->resolver->resolve( $applicable );
+		);
 
 		if ( empty( $campaigns ) ) {
 			return $regular_price;

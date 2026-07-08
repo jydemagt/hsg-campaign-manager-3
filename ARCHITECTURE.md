@@ -77,6 +77,7 @@ AJAX controllers are request adapters. They should not contain pricing rules, co
 Files:
 
 - `includes/Campaign/CampaignService.php`
+- `includes/Pricing/CouponService.php`
 - `includes/Pricing/CampaignLoader.php`
 - `includes/Pricing/CampaignEvaluator.php`
 - `includes/Pricing/ConflictResolver.php`
@@ -116,8 +117,9 @@ Pricing service responsibilities:
 - `CampaignEvaluator` determines whether a campaign applies to a product or variation.
 - `ConflictResolver` sorts campaigns by descending priority, then by descending ID, and applies stackability rules.
 - `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
+- `CouponService` maps campaign coupon codes to virtual WooCommerce coupons, validates schedule and product eligibility through WooCommerce coupon hooks, and resolves coupon-aware campaign sets for cart pricing.
 - `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float` and connects WooCommerce price filters to the pricing engine.
-- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, and stores notice metadata for display through WooCommerce item data filters.
+- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, uses coupon-aware campaign resolution for base prices, and stores notice metadata for display through WooCommerce item data filters.
 
 Campaign admin validation remains in `CampaignService`. Runtime pricing decisions live in the pricing service classes.
 
@@ -214,12 +216,19 @@ Pricing runtime:
 
 1. WooCommerce calls the registered price filters.
 2. `PricingService::filter_price()` ignores admin-only non-AJAX requests.
-3. `PricingService::getProductPrice()` loads active campaigns.
-4. `CampaignEvaluator` keeps only campaigns that apply to the product or parent variation.
-5. `ConflictResolver` orders campaigns by descending priority and respects stackability.
-6. `PriceCalculator` applies the winning campaign set for standard pricing.
-7. `CartPricingService` applies complete multi-buy bundles in cart and checkout through `woocommerce_before_calculate_totals`.
-8. `CartPricingService::filter_item_data()` renders line-item notices for completed multi-buy bundles in cart and checkout.
+3. `PricingService::getProductPrice()` asks `CouponService` for the active campaign set on the product.
+4. `CouponService` filters campaigns through `CampaignEvaluator` and `ConflictResolver`.
+5. `PriceCalculator` applies the winning standard campaign set for product-page pricing.
+6. `CartPricingService` resolves the same campaign set for cart items and applies complete multi-buy bundles in cart and checkout through `woocommerce_before_calculate_totals`.
+7. `CartPricingService::filter_item_data()` renders line-item notices for completed multi-buy bundles in cart and checkout.
+
+Coupon application:
+
+1. A customer enters a campaign coupon code in cart or checkout.
+2. `CouponService` returns virtual WooCommerce coupon data for matching campaign coupons.
+3. WooCommerce validates the coupon through the `woocommerce_coupon_is_valid` and `woocommerce_coupon_is_valid_for_product` hooks.
+4. `CouponService` checks schedule, product eligibility, priority, and stackability against the active campaign set.
+5. `CartPricingService` resolves the same campaign set for each cart item so coupon campaigns can suppress or combine with other campaign discounts correctly.
 
 ## Campaign Storage
 
@@ -252,10 +261,12 @@ Current WooCommerce touchpoints:
 - Products are resolved with `wc_get_product()`.
 - Product values are formatted through WooCommerce helpers such as `wc_format_decimal()`.
 - Pricing is connected through WooCommerce price filters for simple products and variations.
+- Virtual campaign coupons are surfaced through `woocommerce_get_shop_coupon_data`.
+- Campaign coupon validation uses `woocommerce_coupon_is_valid`, `woocommerce_coupon_is_valid_for_product`, and `woocommerce_coupon_error`.
 - Multi-buy bundle pricing is applied in cart and checkout with `woocommerce_before_calculate_totals`.
 - Multi-buy notices are rendered with WooCommerce cart item data filters.
 
-The current pricing foundation can calculate campaign-adjusted product prices from active campaigns and apply multi-buy bundles in cart and checkout. Coupon behavior, order analytics, and REST exposure are not implemented yet.
+The current pricing foundation can calculate campaign-adjusted product prices from active campaigns, apply multi-buy bundles in cart and checkout, and validate campaign coupons dynamically through WooCommerce hooks. Order analytics and REST exposure are not implemented yet.
 
 ## Adding Future Features
 

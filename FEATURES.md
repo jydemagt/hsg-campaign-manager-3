@@ -33,6 +33,14 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Multi-buy runtime pricing applies complete bundles in cart and checkout.
 - Multi-buy line-item notices appear in cart and checkout when a bundle is applied.
 
+### Coupon Engine
+
+- Campaign coupon codes are exposed as virtual WooCommerce coupons.
+- Schedule and product eligibility are validated dynamically through WooCommerce coupon hooks.
+- Percentage discount and fixed discount coupon campaigns are supported.
+- Coupon discounts apply only to eligible products in cart and checkout.
+- Coupon priority and stackability reuse the shared campaign conflict rules.
+
 ### Admin Security Baseline
 
 - Admin nonce localized to JavaScript.
@@ -48,11 +56,6 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Foundation classes exist for loading, evaluating, resolving, and calculating campaign prices.
 - Multi-buy campaigns are stored, validated, priced at cart and checkout time, and surface line-item notices for completed bundles.
 - Further catalog, caching, and edge-case hardening remains.
-
-### Coupon Engine
-
-- Metadata fields exist for `coupon` and `stackable`.
-- Coupon generation, coupon validation, and WooCommerce coupon integration are not implemented yet.
 
 ### Scheduling
 

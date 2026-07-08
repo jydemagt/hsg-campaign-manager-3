@@ -78,23 +78,6 @@ Acceptance criteria:
 
 ## Medium
 
-### Implement Coupon Engine
-
-Description:
-Connect campaign coupon metadata to WooCommerce coupon behavior.
-
-Expected files:
-- `includes/Plugin.php`
-- `includes/Campaign/CampaignService.php`
-- `includes/Campaign/CampaignRepository.php`
-- New focused coupon integration/service files under `includes/`
-
-Acceptance criteria:
-- Campaign coupons can be configured and validated.
-- Coupon behavior respects campaign schedule and product selection.
-- Stackability rules are enforced.
-- Coupon logic is covered by service-level validation.
-
 ### Add Bulk Actions
 
 Description:
