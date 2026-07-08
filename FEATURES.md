@@ -33,7 +33,8 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Price calculation supports fixed price, percentage discount, and fixed discount.
 - WooCommerce product and variation price filters call the pricing service.
 - Multi-buy runtime pricing applies complete bundles in cart and checkout.
-- Multi-buy line-item notices appear in cart and checkout when a bundle is applied.
+- Campaign labels appear on product pages, product loops, cart items, and checkout items when active campaigns affect the product.
+- Fixed price, multi-buy, percentage discount, and fixed discount campaign labels are supported.
 
 ### Coupon Engine
 

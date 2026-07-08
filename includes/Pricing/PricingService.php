@@ -26,6 +26,13 @@ final class PricingService {
 	private PriceCalculator $calculator;
 
 	/**
+	 * Campaign label service.
+	 *
+	 * @var CampaignLabelService
+	 */
+	private CampaignLabelService $label_service;
+
+	/**
 	 * Cart pricing service.
 	 *
 	 * @var CartPricingService
@@ -39,14 +46,18 @@ final class PricingService {
 
 		$this->coupon_service = new CouponService();
 		$this->calculator     = new PriceCalculator();
+		$this->label_service  = new CampaignLabelService( $this->coupon_service );
 		$this->cart_pricing   = new CartPricingService(
 			$this->coupon_service,
-			$this->calculator
+			$this->calculator,
+			$this->label_service
 		);
 
 		add_filter( 'woocommerce_product_get_price', array( $this, 'filter_price' ), 20, 2 );
 		add_filter( 'woocommerce_product_variation_get_price', array( $this, 'filter_price' ), 20, 2 );
 		add_filter( 'woocommerce_variation_prices_price', array( $this, 'filter_price' ), 20, 2 );
+		add_action( 'woocommerce_single_product_summary', array( $this, 'render_product_labels' ), 11 );
+		add_action( 'woocommerce_after_shop_loop_item_title', array( $this, 'render_product_labels' ), 11 );
 
 	}
 
@@ -122,6 +133,41 @@ final class PricingService {
 				(float) $regular_price
 			)
 		);
+
+	}
+
+	/**
+	 * Render campaign labels for the current product.
+	 *
+	 * @return void
+	 */
+	public function render_product_labels(): void {
+
+		if ( is_admin() && ! wp_doing_ajax() ) {
+			return;
+		}
+
+		global $product;
+
+		if ( ! $product instanceof \WC_Product ) {
+			return;
+		}
+
+		$labels = $this->label_service->labels_for_product(
+			(int) $product->get_id()
+		);
+
+		if ( empty( $labels ) ) {
+			return;
+		}
+
+		echo '<div class="hsgcm-campaign-labels">';
+
+		foreach ( $labels as $label ) {
+			echo '<p class="hsgcm-campaign-label">' . esc_html( $label ) . '</p>';
+		}
+
+		echo '</div>';
 
 	}
 

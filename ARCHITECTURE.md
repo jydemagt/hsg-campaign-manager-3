@@ -84,6 +84,7 @@ Files:
 - `includes/Pricing/CampaignEvaluator.php`
 - `includes/Pricing/ConflictResolver.php`
 - `includes/Pricing/PriceCalculator.php`
+- `includes/Pricing/CampaignLabelService.php`
 - `includes/Pricing/PricingService.php`
 - `includes/Pricing/CartPricingService.php`
 
@@ -123,9 +124,10 @@ Pricing service responsibilities:
 - `CampaignEvaluator` determines whether a campaign applies to a product or variation.
 - `ConflictResolver` sorts campaigns by descending priority, then by descending ID, and applies stackability rules.
 - `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
+- `CampaignLabelService` builds de-duplicated customer-facing labels for resolved active campaigns without changing pricing.
 - `CouponService` maps campaign coupon codes to virtual WooCommerce coupons, validates schedule and product eligibility through WooCommerce coupon hooks, and resolves coupon-aware campaign sets for cart pricing.
-- `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float` and connects WooCommerce price filters to the pricing engine.
-- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, uses coupon-aware campaign resolution for base prices, and stores notice metadata for display through WooCommerce item data filters.
+- `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float`, connects WooCommerce price filters to the pricing engine, and renders prepared product campaign labels.
+- `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, uses coupon-aware campaign resolution for base prices, and renders prepared campaign labels through WooCommerce item data filters.
 
 Campaign admin validation remains in `CampaignService`. Runtime pricing decisions live in the pricing service classes.
 
@@ -255,6 +257,14 @@ Coupon application:
 4. `CouponService` checks schedule, product eligibility, priority, and stackability against the active campaign set.
 5. `CartPricingService` resolves the same campaign set for each cart item so coupon campaigns can suppress or combine with other campaign discounts correctly.
 
+Campaign labels:
+
+1. WooCommerce renders a product page, product loop item, cart item, or checkout item.
+2. `PricingService` or `CartPricingService` asks `CampaignLabelService` for prepared labels.
+3. `CampaignLabelService` resolves active campaigns for the product through `CouponService`.
+4. The label service builds de-duplicated labels for fixed price, percentage discount, fixed discount, and multi-buy campaigns.
+5. The WooCommerce hook renders escaped prepared labels only; price calculation, coupon creation, and conflict resolution are unchanged.
+
 ## Campaign Storage
 
 Campaigns are stored as WordPress posts:
@@ -286,6 +296,7 @@ Current WooCommerce touchpoints:
 - Products are resolved with `wc_get_product()`.
 - Product values are formatted through WooCommerce helpers such as `wc_format_decimal()`.
 - Pricing is connected through WooCommerce price filters for simple products and variations.
+- Campaign labels are rendered through WooCommerce product summary, loop, and item data hooks.
 - Virtual campaign coupons are surfaced through `woocommerce_get_shop_coupon_data`.
 - Campaign coupon validation uses `woocommerce_coupon_is_valid`, `woocommerce_coupon_is_valid_for_product`, and `woocommerce_coupon_error`.
 - Multi-buy bundle pricing is applied in cart and checkout with `woocommerce_before_calculate_totals`.

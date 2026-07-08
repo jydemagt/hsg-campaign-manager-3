@@ -26,18 +26,28 @@ final class CartPricingService {
 	private PriceCalculator $calculator;
 
 	/**
+	 * Campaign label service.
+	 *
+	 * @var CampaignLabelService
+	 */
+	private CampaignLabelService $label_service;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param CouponService    $coupon_service Coupon service.
-	 * @param PriceCalculator $calculator Price calculator.
+	 * @param CouponService         $coupon_service Coupon service.
+	 * @param PriceCalculator      $calculator Price calculator.
+	 * @param CampaignLabelService $label_service Campaign label service.
 	 */
 	public function __construct(
 		CouponService $coupon_service,
-		PriceCalculator $calculator
+		PriceCalculator $calculator,
+		CampaignLabelService $label_service
 	) {
 
 		$this->coupon_service = $coupon_service;
 		$this->calculator     = $calculator;
+		$this->label_service  = $label_service;
 
 		add_action(
 			'woocommerce_before_calculate_totals',
@@ -103,10 +113,6 @@ final class CartPricingService {
 		$groups = array();
 
 		foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
-
-			if ( isset( $cart->cart_contents[ $cart_item_key ] ) ) {
-				unset( $cart->cart_contents[ $cart_item_key ]['hsgcm_multi_buy_notice'] );
-			}
 
 			$product = $cart_item['data'] ?? null;
 
@@ -301,61 +307,12 @@ final class CartPricingService {
 				$line_total / $quantity
 			);
 
-			$this->store_notice(
-				$cart,
-				$cart_item_key,
-				$campaign,
-				$bundle_count,
-				$bundle_size,
-				$bundle_price
-			);
-
 		}
 
 	}
 
 	/**
-	 * Store notice metadata on a cart item.
-	 *
-	 * @param \WC_Cart $cart Cart.
-	 * @param string   $cart_item_key Cart item key.
-	 * @param object   $campaign Campaign.
-	 * @param int      $bundle_count Bundle count.
-	 * @param int      $bundle_size Bundle size.
-	 * @param float    $bundle_price Bundle price.
-	 *
-	 * @return void
-	 */
-	private function store_notice(
-		\WC_Cart $cart,
-		string $cart_item_key,
-		object $campaign,
-		int $bundle_count,
-		int $bundle_size,
-		float $bundle_price
-	): void {
-
-		if (
-			$bundle_count <= 0 ||
-			$bundle_size <= 0 ||
-			$bundle_price <= 0 ||
-			! isset( $cart->cart_contents[ $cart_item_key ] )
-		) {
-			return;
-		}
-
-		$cart->cart_contents[ $cart_item_key ]['hsgcm_multi_buy_notice'] = array(
-			'campaign_id'   => (int) ( $campaign->id ?? 0 ),
-			'campaign_name' => sanitize_text_field( $campaign->name ?? '' ),
-			'bundle_count'  => $bundle_count,
-			'bundle_size'   => $bundle_size,
-			'bundle_price'  => $bundle_price,
-		);
-
-	}
-
-	/**
-	 * Append item data for cart and checkout notices.
+	 * Append campaign label item data for cart and checkout.
 	 *
 	 * @param array $item_data Item data.
 	 * @param array $cart_item Cart item.
@@ -367,62 +324,31 @@ final class CartPricingService {
 		array $cart_item
 	): array {
 
-		$notice = $cart_item['hsgcm_multi_buy_notice'] ?? array();
+		$product = $cart_item['data'] ?? null;
 
-		if ( ! is_array( $notice ) ) {
+		if ( ! $product instanceof \WC_Product ) {
 			return $item_data;
 		}
 
-		$text = $this->build_notice_text( $notice );
-
-		if ( '' === $text ) {
-			return $item_data;
-		}
-
-		$item_data[] = array(
-			'name'    => esc_html__( 'Campaign', 'hsg-campaign-manager' ),
-			'display' => esc_html( $text ),
+		$campaign_item_data = $this->label_service->item_data_for_product(
+			(int) $product->get_id(),
+			$this->coupon_service->getAppliedCouponCodes()
 		);
+
+		if ( empty( $campaign_item_data ) ) {
+			return $item_data;
+		}
+
+		foreach ( $campaign_item_data as $campaign_item ) {
+
+			$item_data[] = array(
+				'name'    => esc_html( $campaign_item['name'] ),
+				'display' => esc_html( $campaign_item['display'] ),
+			);
+
+		}
 
 		return $item_data;
-
-	}
-
-	/**
-	 * Build the notice text.
-	 *
-	 * @param array $notice Notice metadata.
-	 *
-	 * @return string
-	 */
-	private function build_notice_text( array $notice ): string {
-
-		$bundle_count = max( 0, (int) ( $notice['bundle_count'] ?? 0 ) );
-		$bundle_size  = max( 0, (int) ( $notice['bundle_size'] ?? 0 ) );
-		$bundle_price = (float) ( $notice['bundle_price'] ?? 0 );
-
-		if ( $bundle_count <= 0 || $bundle_size <= 0 || $bundle_price <= 0 ) {
-			return '';
-		}
-
-		$price_text = wp_strip_all_tags( wc_price( $bundle_price ) );
-
-		if ( $bundle_count > 1 ) {
-			return sprintf(
-				/* translators: 1: number of bundles, 2: bundle quantity, 3: formatted bundle price. */
-				__( '%1$d x %2$d for %3$s applied', 'hsg-campaign-manager' ),
-				$bundle_count,
-				$bundle_size,
-				$price_text
-			);
-		}
-
-		return sprintf(
-			/* translators: 1: bundle quantity, 2: formatted bundle price. */
-			__( '%1$d for %2$s applied', 'hsg-campaign-manager' ),
-			$bundle_size,
-			$price_text
-		);
 
 	}
 
