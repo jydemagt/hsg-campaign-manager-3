@@ -17,6 +17,7 @@
 	padding: 20px;
 	border-radius: 4px;
 	box-sizing: border-box;
+	overflow-x: auto;
 }
 
 .hsgcm-editor {
@@ -66,6 +67,10 @@
 
 .widefat td {
 	vertical-align: middle;
+}
+
+.hsgcm-campaign-table {
+	min-width: 980px;
 }
 
 .hsgcm-actions {

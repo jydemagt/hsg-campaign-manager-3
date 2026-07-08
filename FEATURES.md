@@ -9,7 +9,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 ### Campaign Editor
 
 - WooCommerce submenu page for Campaign Manager.
-- Campaign list showing ID, name, status, and actions.
+- Campaign list showing name, status, campaign type, products count, priority, start date, end date, stackability, conflict status, and actions.
 - Admin editor form for name, status, priority, products, pricing type, pricing value, coupon code, start date, end date, and stacking.
 - Multi-buy campaign type with quantity and bundle price fields in the admin editor.
 - Create, update, edit, and delete flows through authenticated AJAX.

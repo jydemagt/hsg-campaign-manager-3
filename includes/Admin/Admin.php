@@ -7,25 +7,25 @@
 
 namespace HSGCM\Admin;
 
-use HSGCM\Campaign\CampaignRepository;
+use HSGCM\Campaign\CampaignService;
 
 defined( 'ABSPATH' ) || exit;
 
 final class Admin {
 
 	/**
-	 * Repository.
+	 * Campaign service.
 	 *
-	 * @var CampaignRepository
+	 * @var CampaignService
 	 */
-	private CampaignRepository $repository;
+	private CampaignService $service;
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 
-		$this->repository = new CampaignRepository();
+		$this->service = new CampaignService();
 
 		add_action(
 			'admin_menu',
@@ -123,7 +123,7 @@ final class Admin {
 	 */
 	public function render_page(): void {
 
-		$campaigns = $this->repository->all();
+		$campaigns = $this->service->list_rows();
 
 		require HSGCM_PATH . 'templates/admin/campaigns.php';
 

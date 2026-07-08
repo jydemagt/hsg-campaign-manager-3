@@ -26,14 +26,20 @@ defined( 'ABSPATH' ) || exit;
 
 			<h2><?php esc_html_e( 'Campaigns', 'hsg-campaign-manager' ); ?></h2>
 
-			<table class="widefat striped">
+			<table class="widefat striped hsgcm-campaign-table">
 
 				<thead>
 
 				<tr>
-					<th width="60">ID</th>
-					<th><?php esc_html_e( 'Campaign', 'hsg-campaign-manager' ); ?></th>
-					<th width="120"><?php esc_html_e( 'Status', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Campaign name', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Campaign type', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Products count', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Priority', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Start date', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'End date', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Stackable', 'hsg-campaign-manager' ); ?></th>
+					<th><?php esc_html_e( 'Conflict status', 'hsg-campaign-manager' ); ?></th>
 					<th width="160"><?php esc_html_e( 'Actions', 'hsg-campaign-manager' ); ?></th>
 				</tr>
 
@@ -45,7 +51,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<tr>
 
-						<td colspan="4">
+						<td colspan="10">
 
 							<?php esc_html_e(
 								'No campaigns found.',
@@ -62,31 +68,47 @@ defined( 'ABSPATH' ) || exit;
 
 						<tr>
 
-							<td><?php echo esc_html( $campaign->ID ); ?></td>
+							<td><?php echo esc_html( $campaign['name'] ); ?></td>
 
-							<td><?php echo esc_html( $campaign->post_title ); ?></td>
+							<td><?php echo esc_html( $campaign['status'] ); ?></td>
 
-							<td><?php echo esc_html( ucfirst( $campaign->post_status ) ); ?></td>
+							<td><?php echo esc_html( $campaign['type'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['products_count'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['priority'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['start_date'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['end_date'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['stackable'] ); ?></td>
+
+							<td><?php echo esc_html( $campaign['conflict_status'] ); ?></td>
 
 							<td>
 
-								<a
-									href="#"
-									class="button button-small hsgcm-edit"
-									data-id="<?php echo esc_attr( $campaign->ID ); ?>">
+								<div class="hsgcm-actions">
 
-									<?php esc_html_e( 'Edit', 'hsg-campaign-manager' ); ?>
+									<a
+										href="#"
+										class="button button-small hsgcm-edit"
+										data-id="<?php echo esc_attr( $campaign['id'] ); ?>">
 
-								</a>
+										<?php esc_html_e( 'Edit', 'hsg-campaign-manager' ); ?>
 
-								<a
-									href="#"
-									class="button button-small hsgcm-delete"
-									data-id="<?php echo esc_attr( $campaign->ID ); ?>">
+									</a>
 
-									<?php esc_html_e( 'Delete', 'hsg-campaign-manager' ); ?>
+									<a
+										href="#"
+										class="button button-small hsgcm-delete"
+										data-id="<?php echo esc_attr( $campaign['id'] ); ?>">
 
-								</a>
+										<?php esc_html_e( 'Delete', 'hsg-campaign-manager' ); ?>
+
+									</a>
+
+								</div>
 
 							</td>
 

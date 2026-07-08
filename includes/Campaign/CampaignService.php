@@ -52,6 +52,40 @@ final class CampaignService {
 	}
 
 	/**
+	 * Get campaigns prepared for the admin list table.
+	 *
+	 * @return array
+	 */
+	public function list_rows(): array {
+
+		$rows = array();
+
+		foreach ( $this->repository->all_raw() as $campaign ) {
+
+			$campaign = $this->normalize_preview_campaign( $campaign );
+
+			$rows[] = array(
+				'id'              => $campaign['id'],
+				'name'            => $campaign['name'],
+				'status'          => $this->get_status_label( $campaign['status'] ),
+				'type'            => $this->get_type_label( $campaign['type'] ),
+				'products_count'  => count( $campaign['products'] ),
+				'priority'        => $campaign['priority'],
+				'start_date'      => $this->get_date_label( $campaign['start_date'] ),
+				'end_date'        => $this->get_date_label( $campaign['end_date'] ),
+				'stackable'       => $campaign['stackable']
+					? __( 'Yes', 'hsg-campaign-manager' )
+					: __( 'No', 'hsg-campaign-manager' ),
+				'conflict_status' => $this->get_list_conflict_status( $campaign ),
+			);
+
+		}
+
+		return $rows;
+
+	}
+
+	/**
 	 * Save campaign.
 	 *
 	 * @param array $campaign Campaign data.
@@ -290,6 +324,7 @@ final class CampaignService {
 			'priority'   => $this->is_valid_priority( $campaign['priority'] ?? '0' )
 				? (int) $campaign['priority']
 				: 0,
+			'type'       => sanitize_key( $campaign['type'] ?? 'fixed_price' ),
 			'products'   => array_values(
 				array_filter(
 					array_unique(
@@ -299,6 +334,92 @@ final class CampaignService {
 			),
 			'stackable'  => ! empty( $campaign['stackable'] ),
 		);
+
+	}
+
+	/**
+	 * Get the display label for a campaign status.
+	 *
+	 * @param string $status Campaign status.
+	 *
+	 * @return string
+	 */
+	private function get_status_label( string $status ): string {
+
+		if ( 'publish' === $status ) {
+			return __( 'Active', 'hsg-campaign-manager' );
+		}
+
+		if ( 'draft' === $status ) {
+			return __( 'Draft', 'hsg-campaign-manager' );
+		}
+
+		return __( 'Unknown', 'hsg-campaign-manager' );
+
+	}
+
+	/**
+	 * Get the display label for a campaign type.
+	 *
+	 * @param string $type Campaign type.
+	 *
+	 * @return string
+	 */
+	private function get_type_label( string $type ): string {
+
+		$labels = array(
+			'fixed_price'         => __( 'Fixed price', 'hsg-campaign-manager' ),
+			'percentage_discount' => __( 'Percentage discount', 'hsg-campaign-manager' ),
+			'fixed_discount'      => __( 'Fixed discount', 'hsg-campaign-manager' ),
+			'multi_buy'           => __( 'X products for Y price', 'hsg-campaign-manager' ),
+		);
+
+		return $labels[ $type ] ?? __( 'Unknown', 'hsg-campaign-manager' );
+
+	}
+
+	/**
+	 * Get the display label for a campaign date.
+	 *
+	 * @param string $date Campaign date.
+	 *
+	 * @return string
+	 */
+	private function get_date_label( string $date ): string {
+
+		if ( '' === $date ) {
+			return __( 'Not set', 'hsg-campaign-manager' );
+		}
+
+		return $date;
+
+	}
+
+	/**
+	 * Get the conflict status label for the admin list.
+	 *
+	 * @param array $campaign Campaign.
+	 *
+	 * @return string
+	 */
+	private function get_list_conflict_status( array $campaign ): string {
+
+		if (
+			! in_array( $campaign['status'], array( 'draft', 'publish' ), true ) ||
+			empty( $campaign['products'] )
+		) {
+			return __( 'Not checked', 'hsg-campaign-manager' );
+		}
+
+		$preview = $this->preview_conflicts( $campaign );
+
+		if ( empty( $preview['success'] ) ) {
+			return __( 'Not checked', 'hsg-campaign-manager' );
+		}
+
+		return empty( $preview['conflicts'] )
+			? __( 'OK', 'hsg-campaign-manager' )
+			: __( 'Conflict', 'hsg-campaign-manager' );
 
 	}
 

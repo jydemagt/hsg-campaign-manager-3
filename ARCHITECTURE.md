@@ -41,7 +41,7 @@ Responsibilities:
 - Restrict access through the `manage_woocommerce` capability.
 - Enqueue `assets/css/admin.css` and `assets/js/admin.js` only on the campaign page.
 - Localize `admin-ajax.php` and the admin nonce.
-- Load campaigns from the repository for display.
+- Load prepared campaign list rows from `CampaignService` for display.
 - Render the admin template.
 
 The admin layer coordinates the wp-admin screen. It must not validate campaign rules or persist campaign state directly.
@@ -91,6 +91,7 @@ Responsibilities:
 - Normalize and sanitize campaign data passed from controllers.
 - Validate campaign rules.
 - Decide whether a save operation creates or updates a campaign.
+- Prepare admin list rows, including translated labels, product counts, and conflict status.
 - Return consistent success/error arrays for controllers.
 - Delegate persistence to `CampaignRepository`.
 
@@ -168,7 +169,7 @@ Files:
 Responsibilities:
 
 - Render the campaign list and editor form.
-- Display campaign ID, title, status, edit action, and delete action.
+- Display prepared campaign name, status, campaign type, product count, priority, schedule, stackability, conflict status, edit action, and delete action.
 - Provide a product multi-select field backed by AJAX product search.
 - Submit create/update/delete requests through admin AJAX.
 - Show success and error notices.
@@ -181,9 +182,10 @@ Templates must escape output and should receive prepared data. JavaScript may im
 Campaign list:
 
 1. WordPress loads the WooCommerce admin submenu page.
-2. `Admin::render_page()` calls `CampaignRepository::all()`.
-3. The repository loads `hsg_campaign` posts with `draft` and `publish` statuses.
-4. `templates/admin/campaigns.php` renders the table and editor.
+2. `Admin::render_page()` calls `CampaignService::list_rows()`.
+3. The service loads editable campaign data through `CampaignRepository::all_raw()`.
+4. The service prepares translated labels, counts assigned products, and reuses conflict preview logic to classify each campaign as `OK`, `Conflict`, or `Not checked`.
+5. `templates/admin/campaigns.php` renders the table and editor.
 
 Create or update campaign:
 
