@@ -30,6 +30,7 @@ final class AjaxController {
 		add_action( 'wp_ajax_hsgcm_get_campaign', array( $this, 'get_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_save_campaign', array( $this, 'save_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_delete_campaign', array( $this, 'delete_campaign' ) );
+		add_action( 'wp_ajax_hsgcm_update_campaign_status', array( $this, 'update_campaign_status' ) );
 		add_action( 'wp_ajax_hsgcm_preview_conflicts', array( $this, 'preview_conflicts' ) );
 
 	}
@@ -146,6 +147,34 @@ final class AjaxController {
 
 		$result = $this->service->delete(
 			absint( $_POST['id'] ?? 0 )
+		);
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( $result );
+		}
+
+		wp_send_json_success( $result );
+
+	}
+
+	/**
+	 * Update campaign status.
+	 *
+	 * @return void
+	 */
+	public function update_campaign_status(): void {
+
+		$this->verify();
+
+		$status = $_POST['status'] ?? '';
+
+		if ( ! is_scalar( $status ) ) {
+			$status = '';
+		}
+
+		$result = $this->service->update_status(
+			absint( $_POST['id'] ?? 0 ),
+			sanitize_key( wp_unslash( (string) $status ) )
 		);
 
 		if ( ! $result['success'] ) {

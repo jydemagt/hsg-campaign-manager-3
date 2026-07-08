@@ -77,6 +77,7 @@ final class CampaignService {
 					? __( 'Yes', 'hsg-campaign-manager' )
 					: __( 'No', 'hsg-campaign-manager' ),
 				'conflict_status' => $this->get_list_conflict_status( $campaign ),
+				'quick_action'    => $this->get_quick_action( $campaign['status'] ),
 			);
 
 		}
@@ -162,6 +163,57 @@ final class CampaignService {
 		return array(
 			'success' => true,
 			'message' => __( 'Campaign deleted.', 'hsg-campaign-manager' ),
+		);
+
+	}
+
+	/**
+	 * Update campaign status.
+	 *
+	 * @param int    $id     Campaign ID.
+	 * @param string $status Campaign status.
+	 *
+	 * @return array
+	 */
+	public function update_status(
+		int $id,
+		string $status
+	): array {
+
+		$status = sanitize_key( $status );
+
+		if ( $id <= 0 || ! $this->repository->find_raw( $id ) ) {
+
+			return array(
+				'success' => false,
+				'message' => __( 'Campaign not found.', 'hsg-campaign-manager' ),
+			);
+
+		}
+
+		if ( ! in_array( $status, array( 'draft', 'publish' ), true ) ) {
+
+			return array(
+				'success' => false,
+				'message' => __( 'Campaign status is invalid.', 'hsg-campaign-manager' ),
+			);
+
+		}
+
+		if ( ! $this->repository->update_status( $id, $status ) ) {
+
+			return array(
+				'success' => false,
+				'message' => __( 'Unable to update campaign status.', 'hsg-campaign-manager' ),
+			);
+
+		}
+
+		return array(
+			'success' => true,
+			'message' => 'publish' === $status
+				? __( 'Campaign activated.', 'hsg-campaign-manager' )
+				: __( 'Campaign deactivated.', 'hsg-campaign-manager' ),
 		);
 
 	}
@@ -392,6 +444,33 @@ final class CampaignService {
 		}
 
 		return $date;
+
+	}
+
+	/**
+	 * Get the prepared list quick action for a campaign status.
+	 *
+	 * @param string $status Campaign status.
+	 *
+	 * @return array
+	 */
+	private function get_quick_action( string $status ): array {
+
+		if ( 'draft' === $status ) {
+			return array(
+				'status' => 'publish',
+				'label'  => __( 'Activate', 'hsg-campaign-manager' ),
+			);
+		}
+
+		if ( 'publish' === $status ) {
+			return array(
+				'status' => 'draft',
+				'label'  => __( 'Deactivate', 'hsg-campaign-manager' ),
+			);
+		}
+
+		return array();
 
 	}
 

@@ -68,6 +68,7 @@ Current AJAX actions:
 - `hsgcm_get_campaign`
 - `hsgcm_save_campaign`
 - `hsgcm_delete_campaign`
+- `hsgcm_update_campaign_status`
 - `hsgcm_preview_conflicts`
 - `hsgcm_product_search`
 
@@ -92,6 +93,7 @@ Responsibilities:
 - Validate campaign rules.
 - Decide whether a save operation creates or updates a campaign.
 - Prepare admin list rows, including translated labels, product counts, and conflict status.
+- Validate and apply admin quick status changes between draft and published campaigns.
 - Return consistent success/error arrays for controllers.
 - Delegate persistence to `CampaignRepository`.
 
@@ -141,7 +143,7 @@ Responsibilities:
 - Load and merge campaign metadata defaults.
 - Load published campaigns and raw campaign data for service use.
 - Resolve assigned WooCommerce products into Select2-compatible data.
-- Create, update, delete, and count campaigns using WordPress APIs.
+- Create, update, update status, delete, and count campaigns using WordPress APIs.
 
 Repository defaults are the source of truth for stored campaign shape. When metadata is missing, the repository returns:
 
@@ -169,7 +171,7 @@ Files:
 Responsibilities:
 
 - Render the campaign list and editor form.
-- Display prepared campaign name, status, campaign type, product count, priority, schedule, stackability, conflict status, edit action, and delete action.
+- Display prepared campaign name, status, campaign type, product count, priority, schedule, stackability, conflict status, edit action, quick status action, and delete action.
 - Provide a product multi-select field backed by AJAX product search.
 - Submit create/update/delete requests through admin AJAX.
 - Show success and error notices.
@@ -218,6 +220,15 @@ Delete campaign:
 2. JavaScript posts `hsgcm_delete_campaign`.
 3. `CampaignService::delete()` delegates to the repository.
 4. The repository permanently deletes the campaign post.
+
+Quick status action:
+
+1. The admin clicks Activate or Deactivate in the campaign list.
+2. JavaScript posts `hsgcm_update_campaign_status` with campaign ID and target status.
+3. `AjaxController::update_campaign_status()` verifies nonce and capability, sanitizes request input, and delegates to `CampaignService`.
+4. `CampaignService::update_status()` validates the campaign and requested status.
+5. `CampaignRepository::update_status()` updates the campaign post status and stored metadata status.
+6. The AJAX controller returns JSON and the admin list reloads.
 
 Product search:
 

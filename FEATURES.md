@@ -13,6 +13,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Admin editor form for name, status, priority, products, pricing type, pricing value, coupon code, start date, end date, and stacking.
 - Multi-buy campaign type with quantity and bundle price fields in the admin editor.
 - Create, update, edit, and delete flows through authenticated AJAX.
+- Quick Activate and Deactivate actions in the campaign list through authenticated AJAX.
 - Product search powered by WooCommerce products and variations.
 - Service-layer validation for required name, date ranges, non-negative priority, required pricing value, numeric pricing value, and percentage range.
 - Priority starts at `0`, and higher priority values win when campaigns overlap.

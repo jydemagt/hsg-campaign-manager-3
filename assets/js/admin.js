@@ -99,6 +99,11 @@
 				this.deleteCampaign.bind(this)
 			);
 
+			$('.hsgcm-status-action').on(
+				'click',
+				this.updateCampaignStatus.bind(this)
+			);
+
 			this.form.on(
 				'change',
 				'#hsgcm-type',
@@ -501,6 +506,69 @@
 			if (isMultiBuy && !$('#hsgcm-quantity').val()) {
 				$('#hsgcm-quantity').val('2');
 			}
+
+		}
+
+		/**
+		 * Update campaign status from the list.
+		 */
+		updateCampaignStatus(e) {
+
+			e.preventDefault();
+
+			const button = $(e.currentTarget);
+			const id = button.data('id');
+			const status = button.data('status');
+
+			button.prop('disabled', true);
+
+			$.post(
+
+				hsgcmAdmin.ajaxUrl,
+
+				{
+
+					action: 'hsgcm_update_campaign_status',
+
+					nonce: hsgcmAdmin.nonce,
+
+					id: id,
+
+					status: status
+
+				}
+
+			)
+
+			.done((response) => {
+
+				if (!response.success) {
+
+					button.prop('disabled', false);
+
+					this.showMessage(
+						response.data.message,
+						'error'
+					);
+
+					return;
+
+				}
+
+				location.reload();
+
+			})
+
+			.fail(() => {
+
+				button.prop('disabled', false);
+
+				this.showMessage(
+					hsgcmAdmin.i18n.statusError,
+					'error'
+				);
+
+			});
 
 		}
 

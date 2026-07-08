@@ -99,6 +99,20 @@ defined( 'ABSPATH' ) || exit;
 
 									</a>
 
+									<?php if ( ! empty( $campaign['quick_action'] ) ) : ?>
+
+										<a
+											href="#"
+											class="button button-small hsgcm-status-action"
+											data-id="<?php echo esc_attr( $campaign['id'] ); ?>"
+											data-status="<?php echo esc_attr( $campaign['quick_action']['status'] ); ?>">
+
+											<?php echo esc_html( $campaign['quick_action']['label'] ); ?>
+
+										</a>
+
+									<?php endif; ?>
+
 									<a
 										href="#"
 										class="button button-small hsgcm-delete"

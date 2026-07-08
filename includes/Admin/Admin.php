@@ -110,6 +110,7 @@ final class Admin {
 					'products'       => __( 'Overlapping products', 'hsg-campaign-manager' ),
 					'priority'       => __( 'Priority comparison', 'hsg-campaign-manager' ),
 					'winner'         => __( 'Would win', 'hsg-campaign-manager' ),
+					'statusError'    => __( 'Unable to update campaign status.', 'hsg-campaign-manager' ),
 				),
 			)
 		);

@@ -312,6 +312,54 @@ final class CampaignRepository {
 	}
 
 	/**
+	 * Update campaign status.
+	 *
+	 * @param int    $id     Campaign ID.
+	 * @param string $status Campaign status.
+	 *
+	 * @return bool
+	 */
+	public function update_status(
+		int $id,
+		string $status
+	): bool {
+
+		$result = wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => $status,
+			),
+			true
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return false;
+		}
+
+		$data = get_post_meta(
+			$id,
+			self::META_KEY,
+			true
+		);
+
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		$data['id']     = $id;
+		$data['status'] = $status;
+
+		update_post_meta(
+			$id,
+			self::META_KEY,
+			$data
+		);
+
+		return true;
+
+	}
+
+	/**
 	 * Delete campaign.
 	 *
 	 * @param int $id Campaign ID.
