@@ -57,25 +57,6 @@ Acceptance criteria:
 - Admin UI clearly indicates scheduled, active, and expired campaigns.
 - Invalid dates are rejected in the service layer before save.
 
-### Implement Conflict Resolution Visibility
-
-Description:
-Detect overlapping campaigns that target the same product and surface the result before publish.
-
-Expected files:
-- `includes/Campaign/CampaignService.php`
-- `includes/Campaign/CampaignRepository.php`
-- `includes/Pricing/ConflictResolver.php`
-- `templates/admin/campaigns.php`
-- `assets/js/admin.js`
-
-Acceptance criteria:
-- Overlapping campaigns are detected before publish.
-- Higher priority determines the winner when stacking is disabled.
-- Stackable campaigns follow explicit rules.
-- Admins receive actionable conflict messages.
-- Any priority-based comparison remains descending.
-
 ## Medium
 
 ### Add Bulk Actions

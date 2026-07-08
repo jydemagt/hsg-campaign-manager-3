@@ -39,6 +39,29 @@ final class CampaignRepository {
 	}
 
 	/**
+	 * Return raw data for all editable campaigns.
+	 *
+	 * @return array
+	 */
+	public function all_raw(): array {
+
+		$campaigns = array();
+
+		foreach ( $this->all() as $post ) {
+
+			$campaign = $this->find_raw( (int) $post->ID );
+
+			if ( is_array( $campaign ) ) {
+				$campaigns[] = $campaign;
+			}
+
+		}
+
+		return $campaigns;
+
+	}
+
+	/**
 	 * Return published campaigns.
 	 *
 	 * @return array
@@ -185,6 +208,36 @@ final class CampaignRepository {
 		$data['products'] = is_array( $data['products'] ) ? $data['products'] : array();
 
 		return $data;
+
+	}
+
+	/**
+	 * Resolve products into admin display rows.
+	 *
+	 * @param array $product_ids Product IDs.
+	 *
+	 * @return array
+	 */
+	public function products_for_ids( array $product_ids ): array {
+
+		$products = array();
+
+		foreach ( array_values( array_unique( array_map( 'absint', $product_ids ) ) ) as $product_id ) {
+
+			$product = wc_get_product( $product_id );
+
+			if ( ! $product ) {
+				continue;
+			}
+
+			$products[] = array(
+				'id'   => $product->get_id(),
+				'text' => $product->get_formatted_name(),
+			);
+
+		}
+
+		return $products;
 
 	}
 

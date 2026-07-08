@@ -78,6 +78,41 @@
 	margin: 0;
 }
 
+.hsgcm-conflict-preview {
+	padding: 8px 12px;
+}
+
+.hsgcm-conflict-preview p {
+	margin: 0.5em 0;
+}
+
+.hsgcm-conflict-list {
+	margin: 8px 0 0;
+}
+
+.hsgcm-conflict-item {
+	margin: 0 0 12px;
+}
+
+.hsgcm-conflict-item:last-child {
+	margin-bottom: 0;
+}
+
+.hsgcm-conflict-item dl {
+	display: grid;
+	grid-template-columns: minmax(120px, 0.45fr) 1fr;
+	gap: 4px 10px;
+	margin: 6px 0 0;
+}
+
+.hsgcm-conflict-item dt {
+	font-weight: 600;
+}
+
+.hsgcm-conflict-item dd {
+	margin: 0;
+}
+
 @media screen and (max-width: 1200px) {
 
 	.hsgcm-wrapper {

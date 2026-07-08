@@ -133,6 +133,81 @@ final class CampaignService {
 	}
 
 	/**
+	 * Preview campaign conflicts without saving.
+	 *
+	 * @param array $campaign Campaign data.
+	 *
+	 * @return array
+	 */
+	public function preview_conflicts( array $campaign ): array {
+
+		$campaign = $this->normalize_preview_campaign(
+			$this->sanitize( $campaign )
+		);
+
+		if (
+			! in_array( $campaign['status'], array( 'draft', 'publish' ), true ) ||
+			empty( $campaign['products'] )
+		) {
+			return array(
+				'success'   => true,
+				'message'   => __( 'No conflicts found.', 'hsg-campaign-manager' ),
+				'conflicts' => array(),
+			);
+		}
+
+		$conflicts = array();
+
+		foreach ( $this->repository->all_raw() as $other ) {
+
+			$other = $this->normalize_preview_campaign( $other );
+
+			if (
+				$other['id'] === $campaign['id'] ||
+				! in_array( $other['status'], array( 'draft', 'publish' ), true ) ||
+				empty( $other['products'] )
+			) {
+				continue;
+			}
+
+			$overlapping_products = array_values(
+				array_intersect(
+					$campaign['products'],
+					$other['products']
+				)
+			);
+
+			if (
+				empty( $overlapping_products ) ||
+				! $this->date_ranges_overlap( $campaign, $other ) ||
+				$this->campaigns_can_stack( $campaign, $other )
+			) {
+				continue;
+			}
+
+			$conflicts[] = array(
+				'campaign_id'          => $other['id'],
+				'campaign_name'        => $other['name'],
+				'overlapping_products' => $this->repository->products_for_ids( $overlapping_products ),
+				'current_priority'     => $campaign['priority'],
+				'other_priority'       => $other['priority'],
+				'priority_comparison'  => $this->format_priority_comparison( $campaign, $other ),
+				'winner'               => $this->determine_conflict_winner( $campaign, $other ),
+			);
+
+		}
+
+		return array(
+			'success'   => true,
+			'message'   => empty( $conflicts )
+				? __( 'No conflicts found.', 'hsg-campaign-manager' )
+				: __( 'Potential campaign conflicts found.', 'hsg-campaign-manager' ),
+			'conflicts' => $conflicts,
+		);
+
+	}
+
+	/**
 	 * Sanitize campaign.
 	 *
 	 * @param array $campaign Raw campaign.
@@ -194,6 +269,187 @@ final class CampaignService {
 		);
 
 		return $campaign;
+
+	}
+
+	/**
+	 * Normalize campaign values used by conflict preview.
+	 *
+	 * @param array $campaign Campaign.
+	 *
+	 * @return array
+	 */
+	private function normalize_preview_campaign( array $campaign ): array {
+
+		return array(
+			'id'         => absint( $campaign['id'] ?? 0 ),
+			'name'       => sanitize_text_field( $campaign['name'] ?? '' ),
+			'status'     => sanitize_key( $campaign['status'] ?? 'draft' ),
+			'start_date' => sanitize_text_field( $campaign['start_date'] ?? '' ),
+			'end_date'   => sanitize_text_field( $campaign['end_date'] ?? '' ),
+			'priority'   => $this->is_valid_priority( $campaign['priority'] ?? '0' )
+				? (int) $campaign['priority']
+				: 0,
+			'products'   => array_values(
+				array_filter(
+					array_unique(
+						array_map( 'absint', (array) ( $campaign['products'] ?? array() ) )
+					)
+				)
+			),
+			'stackable'  => ! empty( $campaign['stackable'] ),
+		);
+
+	}
+
+	/**
+	 * Determine whether two campaign schedules overlap.
+	 *
+	 * @param array $campaign Campaign.
+	 * @param array $other    Other campaign.
+	 *
+	 * @return bool
+	 */
+	private function date_ranges_overlap(
+		array $campaign,
+		array $other
+	): bool {
+
+		$campaign_start = $this->normalize_preview_date( $campaign['start_date'] );
+		$campaign_end   = $this->normalize_preview_date( $campaign['end_date'] );
+		$other_start    = $this->normalize_preview_date( $other['start_date'] );
+		$other_end      = $this->normalize_preview_date( $other['end_date'] );
+
+		if (
+			null !== $campaign_start &&
+			null !== $campaign_end &&
+			$campaign_end < $campaign_start
+		) {
+			return false;
+		}
+
+		if (
+			null !== $other_start &&
+			null !== $other_end &&
+			$other_end < $other_start
+		) {
+			return false;
+		}
+
+		return (
+			( null === $campaign_start || null === $other_end || $campaign_start <= $other_end ) &&
+			( null === $other_start || null === $campaign_end || $other_start <= $campaign_end )
+		);
+
+	}
+
+	/**
+	 * Normalize a preview date.
+	 *
+	 * @param string $date Date.
+	 *
+	 * @return string|null
+	 */
+	private function normalize_preview_date( string $date ): ?string {
+
+		if ( '' === $date || ! $this->is_valid_date( $date ) ) {
+			return null;
+		}
+
+		return $date;
+
+	}
+
+	/**
+	 * Determine whether two campaigns can stack without blocking each other.
+	 *
+	 * @param array $campaign Campaign.
+	 * @param array $other    Other campaign.
+	 *
+	 * @return bool
+	 */
+	private function campaigns_can_stack(
+		array $campaign,
+		array $other
+	): bool {
+
+		return $campaign['stackable'] && $other['stackable'];
+
+	}
+
+	/**
+	 * Determine the winner for a campaign conflict.
+	 *
+	 * @param array $campaign Campaign.
+	 * @param array $other    Other campaign.
+	 *
+	 * @return array
+	 */
+	private function determine_conflict_winner(
+		array $campaign,
+		array $other
+	): array {
+
+		$current_wins = $campaign['priority'] > $other['priority'];
+
+		if ( $campaign['priority'] === $other['priority'] ) {
+			$current_wins = $campaign['id'] > $other['id'];
+		}
+
+		if ( $current_wins ) {
+			return array(
+				'id'   => $campaign['id'],
+				'name' => '' !== $campaign['name']
+					? $campaign['name']
+					: __( 'Current campaign', 'hsg-campaign-manager' ),
+				'type' => 'current',
+			);
+		}
+
+		return array(
+			'id'   => $other['id'],
+			'name' => $other['name'],
+			'type' => 'other',
+		);
+
+	}
+
+	/**
+	 * Format priority comparison text.
+	 *
+	 * @param array $campaign Campaign.
+	 * @param array $other    Other campaign.
+	 *
+	 * @return string
+	 */
+	private function format_priority_comparison(
+		array $campaign,
+		array $other
+	): string {
+
+		if ( $campaign['priority'] > $other['priority'] ) {
+			return sprintf(
+				/* translators: 1: current campaign priority, 2: conflicting campaign priority. */
+				__( 'Current priority %1$d is higher than conflicting priority %2$d.', 'hsg-campaign-manager' ),
+				$campaign['priority'],
+				$other['priority']
+			);
+		}
+
+		if ( $campaign['priority'] < $other['priority'] ) {
+			return sprintf(
+				/* translators: 1: current campaign priority, 2: conflicting campaign priority. */
+				__( 'Current priority %1$d is lower than conflicting priority %2$d.', 'hsg-campaign-manager' ),
+				$campaign['priority'],
+				$other['priority']
+			);
+		}
+
+		return sprintf(
+			/* translators: 1: shared priority value. */
+			__( 'Both campaigns have priority %1$d; the higher campaign ID wins.', 'hsg-campaign-manager' ),
+			$campaign['priority']
+		);
 
 	}
 

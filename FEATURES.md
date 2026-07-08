@@ -16,6 +16,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 - Product search powered by WooCommerce products and variations.
 - Service-layer validation for required name, date ranges, non-negative priority, required pricing value, numeric pricing value, and percentage range.
 - Priority starts at `0`, and higher priority values win when campaigns overlap.
+- Campaign editor conflict preview for overlapping draft or active campaigns, including overlapping products, priority comparison, and winning campaign.
 
 ### Campaign Storage
 
@@ -67,7 +68,7 @@ This roadmap reflects the current repository state. Items marked Completed are i
 
 - Metadata field exists for `priority`.
 - Runtime priority and stackability resolution is implemented for pricing.
-- Admin conflict detection before publish is not implemented yet.
+- Admin conflict preview reports overlapping non-stackable campaigns without blocking saves.
 
 ## Planned
 

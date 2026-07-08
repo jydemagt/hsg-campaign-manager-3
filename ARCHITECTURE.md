@@ -68,6 +68,7 @@ Current AJAX actions:
 - `hsgcm_get_campaign`
 - `hsgcm_save_campaign`
 - `hsgcm_delete_campaign`
+- `hsgcm_preview_conflicts`
 - `hsgcm_product_search`
 
 AJAX controllers are request adapters. They should not contain pricing rules, conflict rules, scheduling rules, coupon rules, or persistence decisions.
@@ -110,6 +111,8 @@ Current campaign fields handled by the service:
 - `stackable`
 
 Current validation covers required campaign name, valid status, valid campaign type, valid date format, end date not earlier than start date, non-negative integer priority, required numeric campaign value, non-negative fixed values, and percentage discounts between 1 and 100.
+
+Campaign conflict preview is handled in `CampaignService` without saving. It compares the current editor state with draft and published campaigns, reports overlaps only when product assignments and date windows overlap, ignores pairs where both campaigns are stackable, and uses descending priority followed by descending campaign ID to identify the winning campaign.
 
 Pricing service responsibilities:
 
@@ -169,6 +172,7 @@ Responsibilities:
 - Provide a product multi-select field backed by AJAX product search.
 - Submit create/update/delete requests through admin AJAX.
 - Show success and error notices.
+- Show admin-only campaign conflict preview results from AJAX.
 
 Templates must escape output and should receive prepared data. JavaScript may improve the admin interaction, but server-side services remain the source of truth.
 
@@ -197,6 +201,14 @@ Edit campaign:
 3. `CampaignService::get()` delegates to the repository.
 4. The repository loads the post, metadata, and assigned product labels.
 5. JSON data is returned to populate the editor.
+
+Conflict preview:
+
+1. JavaScript posts the current editor state to `hsgcm_preview_conflicts`.
+2. `AjaxController::preview_conflicts()` verifies nonce and capability, sanitizes request input, and delegates to `CampaignService`.
+3. `CampaignService::preview_conflicts()` loads draft and published raw campaigns through `CampaignRepository`.
+4. The service checks product overlap, date-window overlap, stackability, and winner precedence.
+5. JSON data is returned to the admin UI for warnings only; saving is not blocked.
 
 Delete campaign:
 

@@ -103,6 +103,14 @@ final class Admin {
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'hsgcm_admin' ),
+				'i18n'    => array(
+					'previewLoading' => __( 'Checking conflicts...', 'hsg-campaign-manager' ),
+					'previewError'   => __( 'Unable to load conflict preview.', 'hsg-campaign-manager' ),
+					'noConflicts'    => __( 'No conflicts found.', 'hsg-campaign-manager' ),
+					'products'       => __( 'Overlapping products', 'hsg-campaign-manager' ),
+					'priority'       => __( 'Priority comparison', 'hsg-campaign-manager' ),
+					'winner'         => __( 'Would win', 'hsg-campaign-manager' ),
+				),
 			)
 		);
 

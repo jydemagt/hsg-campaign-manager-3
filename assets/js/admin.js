@@ -12,6 +12,7 @@
 		constructor() {
 
 			this.form = $('#hsgcm-campaign-form');
+			this.previewTimer = null;
 
 			if (!this.form.length) {
 				return;
@@ -20,6 +21,7 @@
 			this.initProductSearch();
 			this.bindEvents();
 			this.togglePricingFields();
+			this.previewConflicts();
 
 		}
 
@@ -103,6 +105,12 @@
 				this.togglePricingFields.bind(this)
 			);
 
+			this.form.on(
+				'change input',
+				'#hsgcm-id, #hsgcm-name, #hsgcm-status, #hsgcm-priority, #hsgcm-products, #hsgcm-start-date, #hsgcm-end-date, #hsgcm-stackable',
+				this.scheduleConflictPreview.bind(this)
+			);
+
 		}
 
 		/**
@@ -144,6 +152,49 @@
 			this.togglePricingFields();
 
 			this.showMessage('', '');
+			this.renderConflictPreview({
+				message: hsgcmAdmin.i18n.noConflicts,
+				conflicts: []
+			});
+
+		}
+
+		/**
+		 * Collect current form data for AJAX requests.
+		 */
+		getCampaignData() {
+
+			return {
+
+				nonce: hsgcmAdmin.nonce,
+
+				id: $('#hsgcm-id').val(),
+
+				name: $('#hsgcm-name').val(),
+
+				status: $('#hsgcm-status').val(),
+
+				priority: $('#hsgcm-priority').val(),
+
+				products: $('#hsgcm-products').val(),
+
+				type: $('#hsgcm-type').val(),
+
+				value: $('#hsgcm-value').val(),
+
+				quantity: $('#hsgcm-quantity').val(),
+
+				bundle_price: $('#hsgcm-bundle-price').val(),
+
+				coupon: $('#hsgcm-coupon').val(),
+
+				start_date: $('#hsgcm-start-date').val(),
+
+				end_date: $('#hsgcm-end-date').val(),
+
+				stackable: $('#hsgcm-stackable').is(':checked') ? 1 : 0
+
+			};
 
 		}
 
@@ -162,39 +213,12 @@
 
 				hsgcmAdmin.ajaxUrl,
 
-				{
-
-					action: 'hsgcm_save_campaign',
-
-					nonce: hsgcmAdmin.nonce,
-
-					id: $('#hsgcm-id').val(),
-
-					name: $('#hsgcm-name').val(),
-
-					status: $('#hsgcm-status').val(),
-
-					priority: $('#hsgcm-priority').val(),
-
-					products: $('#hsgcm-products').val(),
-
-					type: $('#hsgcm-type').val(),
-
-					value: $('#hsgcm-value').val(),
-
-					quantity: $('#hsgcm-quantity').val(),
-
-					bundle_price: $('#hsgcm-bundle-price').val(),
-
-					coupon: $('#hsgcm-coupon').val(),
-
-					start_date: $('#hsgcm-start-date').val(),
-
-					end_date: $('#hsgcm-end-date').val(),
-
-					stackable: $('#hsgcm-stackable').is(':checked') ? 1 : 0
-
-				}
+				Object.assign(
+					this.getCampaignData(),
+					{
+						action: 'hsgcm_save_campaign'
+					}
+				)
 
 			)
 
@@ -324,8 +348,143 @@
 
 				$('#hsgcm-products').trigger('change');
 				this.togglePricingFields();
+				this.previewConflicts();
 
 			});
+
+		}
+
+		/**
+		 * Schedule conflict preview refresh.
+		 */
+		scheduleConflictPreview() {
+
+			clearTimeout(this.previewTimer);
+
+			this.previewTimer = setTimeout(
+				() => {
+					this.previewConflicts();
+				},
+				250
+			);
+
+		}
+
+		/**
+		 * Load conflict preview.
+		 */
+		previewConflicts() {
+
+			const preview = $('#hsgcm-conflict-preview');
+
+			if (!preview.length) {
+				return;
+			}
+
+			preview
+				.removeClass('notice-warning notice-error')
+				.addClass('notice-info')
+				.empty()
+				.append(
+					$('<p></p>').text(hsgcmAdmin.i18n.previewLoading)
+				);
+
+			$.post(
+
+				hsgcmAdmin.ajaxUrl,
+
+				Object.assign(
+					this.getCampaignData(),
+					{
+						action: 'hsgcm_preview_conflicts'
+					}
+				)
+
+			)
+
+			.done((response) => {
+
+				if (!response.success) {
+					this.renderConflictError(response.data.message);
+					return;
+				}
+
+				this.renderConflictPreview(response.data);
+
+			})
+
+			.fail(() => {
+
+				this.renderConflictError(hsgcmAdmin.i18n.previewError);
+
+			});
+
+		}
+
+		/**
+		 * Render conflict preview.
+		 */
+		renderConflictPreview(data) {
+
+			const preview = $('#hsgcm-conflict-preview');
+			const conflicts = Array.isArray(data.conflicts) ? data.conflicts : [];
+
+			preview
+				.removeClass('notice-warning notice-error')
+				.addClass(conflicts.length ? 'notice-warning' : 'notice-info')
+				.empty()
+				.append(
+					$('<p></p>').text(data.message || hsgcmAdmin.i18n.noConflicts)
+				);
+
+			if (!conflicts.length) {
+				return;
+			}
+
+			const list = $('<ul></ul>').addClass('hsgcm-conflict-list');
+
+			conflicts.forEach((conflict) => {
+
+				const products = Array.isArray(conflict.overlapping_products)
+					? conflict.overlapping_products.map((product) => product.text).join(', ')
+					: '';
+
+				const item = $('<li></li>').addClass('hsgcm-conflict-item');
+
+				item.append(
+					$('<strong></strong>').text(conflict.campaign_name)
+				);
+
+				item.append(
+					$('<dl></dl>')
+						.append($('<dt></dt>').text(hsgcmAdmin.i18n.products))
+						.append($('<dd></dd>').text(products))
+						.append($('<dt></dt>').text(hsgcmAdmin.i18n.priority))
+						.append($('<dd></dd>').text(conflict.priority_comparison))
+						.append($('<dt></dt>').text(hsgcmAdmin.i18n.winner))
+						.append($('<dd></dd>').text(conflict.winner.name))
+				);
+
+				list.append(item);
+
+			});
+
+			preview.append(list);
+
+		}
+
+		/**
+		 * Render conflict preview error.
+		 */
+		renderConflictError(message) {
+
+			$('#hsgcm-conflict-preview')
+				.removeClass('notice-info notice-warning')
+				.addClass('notice-error')
+				.empty()
+				.append(
+					$('<p></p>').text(message || hsgcmAdmin.i18n.previewError)
+				);
 
 		}
 

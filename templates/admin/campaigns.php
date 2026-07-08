@@ -484,6 +484,19 @@ defined( 'ABSPATH' ) || exit;
 
 				</table>
 
+				<h3><?php esc_html_e( 'Conflict Preview', 'hsg-campaign-manager' ); ?></h3>
+
+				<div
+					id="hsgcm-conflict-preview"
+					class="hsgcm-conflict-preview notice inline notice-info"
+					aria-live="polite">
+
+					<p>
+						<?php esc_html_e( 'No conflicts found.', 'hsg-campaign-manager' ); ?>
+					</p>
+
+				</div>
+
 				<p>
 
 					<button
