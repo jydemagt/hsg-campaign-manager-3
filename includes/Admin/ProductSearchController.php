@@ -37,15 +37,22 @@ final class ProductSearchController {
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 
-			wp_send_json_error();
+			wp_send_json_error(
+				array(
+					'message' => __( 'Permission denied.', 'hsg-campaign-manager' ),
+				),
+				403
+			);
 
 		}
 
-		$term = trim(
-			sanitize_text_field(
-				wp_unslash( $_GET['term'] ?? '' )
-			)
-		);
+		$term = $_GET['term'] ?? '';
+
+		if ( ! is_scalar( $term ) ) {
+			$term = '';
+		}
+
+		$term = trim( sanitize_text_field( wp_unslash( (string) $term ) ) );
 
 		if ( '' === $term ) {
 			wp_send_json(

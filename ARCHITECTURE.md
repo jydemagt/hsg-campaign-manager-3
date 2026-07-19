@@ -70,6 +70,7 @@ Current AJAX actions:
 - `hsgcm_delete_campaign`
 - `hsgcm_update_campaign_status`
 - `hsgcm_preview_conflicts`
+- `hsgcm_simulate_campaign`
 - `hsgcm_product_search`
 
 AJAX controllers are request adapters. They should not contain pricing rules, conflict rules, scheduling rules, coupon rules, or persistence decisions.
@@ -85,6 +86,7 @@ Files:
 - `includes/Pricing/ConflictResolver.php`
 - `includes/Pricing/PriceCalculator.php`
 - `includes/Pricing/CampaignLabelService.php`
+- `includes/Pricing/SimulationService.php`
 - `includes/Pricing/PricingService.php`
 - `includes/Pricing/CartPricingService.php`
 
@@ -125,6 +127,7 @@ Pricing service responsibilities:
 - `ConflictResolver` sorts campaigns by descending priority, then by descending ID, and applies stackability rules.
 - `PriceCalculator` applies fixed price, percentage discount, and fixed discount calculations.
 - `CampaignLabelService` builds de-duplicated customer-facing labels for resolved active campaigns without changing pricing.
+- `SimulationService` runs admin-only campaign simulations without creating a WooCommerce cart, using the runtime loader, evaluator, resolver, and calculator.
 - `CouponService` maps campaign coupon codes to virtual WooCommerce coupons, validates schedule and product eligibility through WooCommerce coupon hooks, and resolves coupon-aware campaign sets for cart pricing.
 - `PricingService` exposes `getProductPrice( int $productId, float $regularPrice ): float`, connects WooCommerce price filters to the pricing engine, and renders prepared product campaign labels.
 - `CartPricingService` applies multi-buy bundle pricing in cart and checkout through `woocommerce_before_calculate_totals`, uses coupon-aware campaign resolution for base prices, and renders prepared campaign labels through WooCommerce item data filters.
@@ -264,6 +267,14 @@ Campaign labels:
 3. `CampaignLabelService` resolves active campaigns for the product through `CouponService`.
 4. The label service builds de-duplicated labels for fixed price, percentage discount, fixed discount, and multi-buy campaigns.
 5. The WooCommerce hook renders escaped prepared labels only; price calculation, coupon creation, and conflict resolution are unchanged.
+
+Campaign simulator:
+
+1. The admin selects a product, quantity, customer role, coupon, and date on the Campaign Manager page.
+2. JavaScript posts `hsgcm_simulate_campaign` to `admin-ajax.php`.
+3. `AjaxController::simulate_campaign()` verifies nonce and `manage_woocommerce`, sanitizes request input, and delegates to `SimulationService`.
+4. `SimulationService` loads campaigns for the selected date through `CampaignLoader`, checks product applicability through `CampaignEvaluator`, resolves winners through `ConflictResolver`, and calculates totals through `PriceCalculator`.
+5. The service returns regular price, applicable campaigns, rejected campaigns, winning campaign, final price, discount amount, and explanation for admin display.
 
 ## Campaign Storage
 

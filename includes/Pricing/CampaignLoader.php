@@ -47,28 +47,75 @@ final class CampaignLoader {
 			return $this->active;
 		}
 
-		$campaigns = array();
-		$today     = current_time( 'Y-m-d' );
+		$this->active = $this->active_for_date( current_time( 'Y-m-d' ) );
 
-		foreach ( $this->repository->published() as $post ) {
+		return $this->active;
 
-			$campaign = $this->repository->find_raw( (int) $post->ID );
+	}
 
-			if (
-				! $campaign ||
-				! $this->is_active( $campaign, $today ) ||
-				! $this->has_pricing( $campaign )
-			) {
+	/**
+	 * Load active published campaigns for a date.
+	 *
+	 * @param string $date Date in YYYY-MM-DD format.
+	 *
+	 * @return array
+	 */
+	public function active_for_date( string $date ): array {
+
+		return $this->campaigns_for_date( $date )['active'];
+
+	}
+
+	/**
+	 * Evaluate campaigns for a date.
+	 *
+	 * @param string $date Date in YYYY-MM-DD format.
+	 *
+	 * @return array
+	 */
+	public function campaigns_for_date( string $date ): array {
+
+		$active   = array();
+		$rejected = array();
+
+		foreach ( $this->repository->all_raw() as $campaign ) {
+
+			if ( ! is_array( $campaign ) ) {
 				continue;
 			}
 
-			$campaigns[] = $this->normalize( $campaign );
+			if ( 'publish' !== ( $campaign['status'] ?? '' ) ) {
+				$rejected[] = array(
+					'campaign' => $this->normalize( $campaign ),
+					'reason'   => __( 'Campaign is not published.', 'hsg-campaign-manager' ),
+				);
+				continue;
+			}
+
+			if ( ! $this->is_active( $campaign, $date ) ) {
+				$rejected[] = array(
+					'campaign' => $this->normalize( $campaign ),
+					'reason'   => __( 'Campaign is outside the selected date window.', 'hsg-campaign-manager' ),
+				);
+				continue;
+			}
+
+			if ( ! $this->has_pricing( $campaign ) ) {
+				$rejected[] = array(
+					'campaign' => $this->normalize( $campaign ),
+					'reason'   => __( 'Campaign does not have usable pricing data.', 'hsg-campaign-manager' ),
+				);
+				continue;
+			}
+
+			$active[] = $this->normalize( $campaign );
 
 		}
 
-		$this->active = $campaigns;
-
-		return $this->active;
+		return array(
+			'active'   => $active,
+			'rejected' => $rejected,
+		);
 
 	}
 
@@ -85,30 +132,33 @@ final class CampaignLoader {
 		string $today
 	): bool {
 
+		$start_date = sanitize_text_field( $campaign['start_date'] ?? '' );
+		$end_date   = sanitize_text_field( $campaign['end_date'] ?? '' );
+
 		if (
-			'' !== $campaign['start_date'] &&
-			! $this->is_valid_date( $campaign['start_date'] )
+			'' !== $start_date &&
+			! $this->is_valid_date( $start_date )
 		) {
 			return false;
 		}
 
 		if (
-			'' !== $campaign['end_date'] &&
-			! $this->is_valid_date( $campaign['end_date'] )
+			'' !== $end_date &&
+			! $this->is_valid_date( $end_date )
 		) {
 			return false;
 		}
 
 		if (
-			'' !== $campaign['start_date'] &&
-			$campaign['start_date'] > $today
+			'' !== $start_date &&
+			$start_date > $today
 		) {
 			return false;
 		}
 
 		if (
-			'' !== $campaign['end_date'] &&
-			$campaign['end_date'] < $today
+			'' !== $end_date &&
+			$end_date < $today
 		) {
 			return false;
 		}
@@ -126,29 +176,33 @@ final class CampaignLoader {
 	 */
 	private function has_pricing( array $campaign ): bool {
 
-		if ( 'multi_buy' === $campaign['type'] ) {
+		$type = sanitize_key( $campaign['type'] ?? 'fixed_price' );
+
+		if ( 'multi_buy' === $type ) {
 			return $this->has_multi_buy_pricing( $campaign );
 		}
 
-		if ( ! in_array( $campaign['type'], array( 'fixed_price', 'percentage_discount', 'fixed_discount' ), true ) ) {
+		if ( ! in_array( $type, array( 'fixed_price', 'percentage_discount', 'fixed_discount' ), true ) ) {
 			return false;
 		}
 
-		if ( '' === $campaign['value'] || ! is_numeric( $campaign['value'] ) ) {
+		$value = $campaign['value'] ?? '';
+
+		if ( '' === $value || ! is_numeric( $value ) ) {
 			return false;
 		}
 
 		if (
-			'percentage_discount' === $campaign['type'] &&
+			'percentage_discount' === $type &&
 			(
-				(float) $campaign['value'] < 1 ||
-				(float) $campaign['value'] > 100
+				(float) $value < 1 ||
+				(float) $value > 100
 			)
 		) {
 			return false;
 		}
 
-		return (float) $campaign['value'] >= 0;
+		return (float) $value >= 0;
 
 	}
 

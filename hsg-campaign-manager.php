@@ -1,43 +1,44 @@
 <?php
-/**
- * Plugin Name: HSG Campaign Manager
- * Plugin URI: https://hsg-whisky.dk
- * Description: Campaign manager for HSG Whisky.
- * Version: 3.0.0
- * Author: HSG Whisky
- * Requires PHP: 8.1
- * Requires at least: 6.5
- * WC requires at least: 8.0
- * WC tested up to: 10.2
- * Text Domain: hsg-campaign-manager
- */
-
-defined( 'ABSPATH' ) || exit;
-
 /*
-|--------------------------------------------------------------------------
-| Constants
-|--------------------------------------------------------------------------
+Plugin Name: HSG Campaign Manager
+Description: A WordPress plugin for managing WooCommerce sales campaigns.
+Version: 1.0.0
+Author: Michael Sommerlund
 */
 
-define( 'HSGCM_VERSION', '3.0.0' );
-define( 'HSGCM_PATH', plugin_dir_path( __FILE__ ) );
-define( 'HSGCM_URL', plugin_dir_url( __FILE__ ) );
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-/*
-|--------------------------------------------------------------------------
-| Autoloader
-|--------------------------------------------------------------------------
-*/
+require_once __DIR__ . '/includes/Loader.php';
+require_once __DIR__ . '/includes/Campaign/CampaignService.php';
+require_once __DIR__ . '/includes/Admin/AjaxController.php';
 
-require_once HSGCM_PATH . 'includes/Loader.php';
+class HSGCampaignManager {
+    private $loader;
 
-/*
-|--------------------------------------------------------------------------
-| Boot plugin
-|--------------------------------------------------------------------------
-*/
+    public function __construct() {
+        $this->loader = new Loader();
+        $this->define_admin_hooks();
+    }
 
-HSGCM\Loader::register();
+    private function define_admin_hooks() {
+        require_once __DIR__ . '/includes/Admin/Admin.php';
+        $plugin_admin = new \HSGCM\Admin\Admin();
+        $this->loader->add_action('admin_menu', $plugin_admin, 'register_menu_pages');
 
-HSGCM\Plugin::instance();
+        // Initialize CampaignService and AjaxController
+        $repository = new \HSGCM\Repository\CampaignRepository();
+        $campaign_service = new \HSGCM\Campaign\CampaignService($repository);
+        $ajax_controller = new \HSGCM\Admin\AjaxController($campaign_service);
+
+        $this->loader->add_action('wp_ajax_hsgcm_duplicate_campaign', $ajax_controller, 'handle_duplicate_campaign');
+    }
+
+    public function run() {
+        $this->loader->run();
+    }
+}
+
+$plugin = new HSGCampaignManager();
+$plugin->run();

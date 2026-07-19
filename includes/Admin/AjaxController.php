@@ -8,6 +8,7 @@
 namespace HSGCM\Admin;
 
 use HSGCM\Campaign\CampaignService;
+use HSGCM\Pricing\SimulationService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,17 +22,26 @@ final class AjaxController {
 	private CampaignService $service;
 
 	/**
+	 * Simulation service.
+	 *
+	 * @var SimulationService
+	 */
+	private SimulationService $simulation_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 
-		$this->service = new CampaignService();
+		$this->service            = new CampaignService();
+		$this->simulation_service = new SimulationService();
 
 		add_action( 'wp_ajax_hsgcm_get_campaign', array( $this, 'get_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_save_campaign', array( $this, 'save_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_delete_campaign', array( $this, 'delete_campaign' ) );
 		add_action( 'wp_ajax_hsgcm_update_campaign_status', array( $this, 'update_campaign_status' ) );
 		add_action( 'wp_ajax_hsgcm_preview_conflicts', array( $this, 'preview_conflicts' ) );
+		add_action( 'wp_ajax_hsgcm_simulate_campaign', array( $this, 'simulate_campaign' ) );
 
 	}
 
@@ -66,7 +76,7 @@ final class AjaxController {
 
 		$this->verify();
 
-		$id = absint( $_POST['id'] ?? 0 );
+		$id = absint( $this->post_scalar( 'id' ) );
 
 		$campaign = $this->service->get( $id );
 
@@ -93,37 +103,20 @@ final class AjaxController {
 
 		$this->verify();
 
-		$products = array();
-
-		if ( isset( $_POST['products'] ) ) {
-
-			$products = array_map(
-				'absint',
-				(array) wp_unslash( $_POST['products'] )
-			);
-
-		}
-
-		$priority = $_POST['priority'] ?? '0';
-
-		if ( ! is_scalar( $priority ) ) {
-			$priority = '';
-		}
-
 		$result = $this->service->save(
 			array(
-				'id'         => absint( $_POST['id'] ?? 0 ),
-				'name'       => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
-				'status'     => sanitize_text_field( wp_unslash( $_POST['status'] ?? 'draft' ) ),
-				'start_date' => sanitize_text_field( wp_unslash( $_POST['start_date'] ?? '' ) ),
-				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
-				'priority'   => sanitize_text_field( wp_unslash( (string) $priority ) ),
-				'quantity'   => sanitize_text_field( wp_unslash( $_POST['quantity'] ?? '2' ) ),
-				'bundle_price' => sanitize_text_field( wp_unslash( $_POST['bundle_price'] ?? '' ) ),
-				'products'   => $products,
-				'type'       => sanitize_key( wp_unslash( $_POST['type'] ?? 'fixed_price' ) ),
-				'value'      => sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) ),
-				'coupon'     => sanitize_text_field( wp_unslash( $_POST['coupon'] ?? '' ) ),
+				'id'         => absint( $this->post_scalar( 'id' ) ),
+				'name'       => sanitize_text_field( $this->post_scalar( 'name' ) ),
+				'status'     => sanitize_text_field( $this->post_scalar( 'status', 'draft' ) ),
+				'start_date' => sanitize_text_field( $this->post_scalar( 'start_date' ) ),
+				'end_date'   => sanitize_text_field( $this->post_scalar( 'end_date' ) ),
+				'priority'   => sanitize_text_field( $this->post_scalar( 'priority', '0' ) ),
+				'quantity'   => sanitize_text_field( $this->post_scalar( 'quantity', '2' ) ),
+				'bundle_price' => sanitize_text_field( $this->post_scalar( 'bundle_price' ) ),
+				'products'   => $this->post_product_ids( 'products' ),
+				'type'       => sanitize_key( $this->post_scalar( 'type', 'fixed_price' ) ),
+				'value'      => sanitize_text_field( $this->post_scalar( 'value' ) ),
+				'coupon'     => sanitize_text_field( $this->post_scalar( 'coupon' ) ),
 				'stackable'  => ! empty( $_POST['stackable'] ),
 			)
 		);
@@ -146,7 +139,7 @@ final class AjaxController {
 		$this->verify();
 
 		$result = $this->service->delete(
-			absint( $_POST['id'] ?? 0 )
+			absint( $this->post_scalar( 'id' ) )
 		);
 
 		if ( ! $result['success'] ) {
@@ -166,15 +159,9 @@ final class AjaxController {
 
 		$this->verify();
 
-		$status = $_POST['status'] ?? '';
-
-		if ( ! is_scalar( $status ) ) {
-			$status = '';
-		}
-
 		$result = $this->service->update_status(
-			absint( $_POST['id'] ?? 0 ),
-			sanitize_key( wp_unslash( (string) $status ) )
+			absint( $this->post_scalar( 'id' ) ),
+			sanitize_key( $this->post_scalar( 'status' ) )
 		);
 
 		if ( ! $result['success'] ) {
@@ -182,6 +169,33 @@ final class AjaxController {
 		}
 
 		wp_send_json_success( $result );
+
+	}
+
+	/**
+	 * Simulate campaign evaluation.
+	 *
+	 * @return void
+	 */
+	public function simulate_campaign(): void {
+
+		$this->verify();
+
+		$result = $this->simulation_service->simulate(
+			array(
+				'product_id'    => absint( $this->post_scalar( 'product_id' ) ),
+				'quantity'      => absint( $this->post_scalar( 'quantity', '1' ) ),
+				'customer_role' => sanitize_key( $this->post_scalar( 'customer_role' ) ),
+				'coupon'        => sanitize_text_field( $this->post_scalar( 'coupon' ) ),
+				'date'          => sanitize_text_field( $this->post_scalar( 'date', current_time( 'Y-m-d' ) ) ),
+			)
+		);
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( $result );
+		}
+
+		wp_send_json_success( $result['data'] );
 
 	}
 
@@ -194,32 +208,15 @@ final class AjaxController {
 
 		$this->verify();
 
-		$products = array();
-
-		if ( isset( $_POST['products'] ) ) {
-
-			$products = array_map(
-				'absint',
-				(array) wp_unslash( $_POST['products'] )
-			);
-
-		}
-
-		$priority = $_POST['priority'] ?? '0';
-
-		if ( ! is_scalar( $priority ) ) {
-			$priority = '';
-		}
-
 		$result = $this->service->preview_conflicts(
 			array(
-				'id'         => absint( $_POST['id'] ?? 0 ),
-				'name'       => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
-				'status'     => sanitize_text_field( wp_unslash( $_POST['status'] ?? 'draft' ) ),
-				'start_date' => sanitize_text_field( wp_unslash( $_POST['start_date'] ?? '' ) ),
-				'end_date'   => sanitize_text_field( wp_unslash( $_POST['end_date'] ?? '' ) ),
-				'priority'   => sanitize_text_field( wp_unslash( (string) $priority ) ),
-				'products'   => $products,
+				'id'         => absint( $this->post_scalar( 'id' ) ),
+				'name'       => sanitize_text_field( $this->post_scalar( 'name' ) ),
+				'status'     => sanitize_text_field( $this->post_scalar( 'status', 'draft' ) ),
+				'start_date' => sanitize_text_field( $this->post_scalar( 'start_date' ) ),
+				'end_date'   => sanitize_text_field( $this->post_scalar( 'end_date' ) ),
+				'priority'   => sanitize_text_field( $this->post_scalar( 'priority', '0' ) ),
+				'products'   => $this->post_product_ids( 'products' ),
 				'stackable'  => ! empty( $_POST['stackable'] ),
 			)
 		);
@@ -229,6 +226,62 @@ final class AjaxController {
 		}
 
 		wp_send_json_success( $result );
+
+	}
+
+	/**
+	 * Read a scalar POST value.
+	 *
+	 * @param string $key     POST key.
+	 * @param string $default Default value.
+	 *
+	 * @return string
+	 */
+	private function post_scalar(
+		string $key,
+		string $default = ''
+	): string {
+
+		$value = $_POST[ $key ] ?? $default;
+
+		if ( ! is_scalar( $value ) ) {
+			return $default;
+		}
+
+		return (string) wp_unslash( $value );
+
+	}
+
+	/**
+	 * Read product IDs from POST.
+	 *
+	 * @param string $key POST key.
+	 *
+	 * @return array
+	 */
+	private function post_product_ids( string $key ): array {
+
+		if ( ! isset( $_POST[ $key ] ) ) {
+			return array();
+		}
+
+		$ids = array();
+
+		foreach ( (array) wp_unslash( $_POST[ $key ] ) as $product_id ) {
+
+			if ( ! is_scalar( $product_id ) ) {
+				continue;
+			}
+
+			$product_id = absint( $product_id );
+
+			if ( $product_id > 0 ) {
+				$ids[] = $product_id;
+			}
+
+		}
+
+		return $ids;
 
 	}
 

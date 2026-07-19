@@ -104,13 +104,39 @@ final class Admin {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'hsgcm_admin' ),
 				'i18n'    => array(
-					'previewLoading' => __( 'Checking conflicts...', 'hsg-campaign-manager' ),
-					'previewError'   => __( 'Unable to load conflict preview.', 'hsg-campaign-manager' ),
-					'noConflicts'    => __( 'No conflicts found.', 'hsg-campaign-manager' ),
-					'products'       => __( 'Overlapping products', 'hsg-campaign-manager' ),
-					'priority'       => __( 'Priority comparison', 'hsg-campaign-manager' ),
-					'winner'         => __( 'Would win', 'hsg-campaign-manager' ),
-					'statusError'    => __( 'Unable to update campaign status.', 'hsg-campaign-manager' ),
+					'previewLoading'      => __( 'Checking conflicts...', 'hsg-campaign-manager' ),
+					'previewError'        => __( 'Unable to load conflict preview.', 'hsg-campaign-manager' ),
+					'productSearch'       => __( 'Search products...', 'hsg-campaign-manager' ),
+					'noConflicts'         => __( 'No conflicts found.', 'hsg-campaign-manager' ),
+					'products'            => __( 'Overlapping products', 'hsg-campaign-manager' ),
+					'priority'            => __( 'Priority comparison', 'hsg-campaign-manager' ),
+					'winner'              => __( 'Would win', 'hsg-campaign-manager' ),
+					'statusError'         => __( 'Unable to update campaign status.', 'hsg-campaign-manager' ),
+					'simulationError'     => __( 'Unable to run campaign simulation.', 'hsg-campaign-manager' ),
+					'serverError'         => __( 'Unexpected server error.', 'hsg-campaign-manager' ),
+					'deleteConfirm'       => __( 'Delete campaign?', 'hsg-campaign-manager' ),
+					'deleteError'         => __( 'Unable to delete campaign.', 'hsg-campaign-manager' ),
+					'none'                => __( 'None', 'hsg-campaign-manager' ),
+					'yes'                 => __( 'Yes', 'hsg-campaign-manager' ),
+					'no'                  => __( 'No', 'hsg-campaign-manager' ),
+					'guest'               => __( 'Guest', 'hsg-campaign-manager' ),
+					'product'             => __( 'Product', 'hsg-campaign-manager' ),
+					'quantity'            => __( 'Quantity', 'hsg-campaign-manager' ),
+					'customerRole'        => __( 'Customer role', 'hsg-campaign-manager' ),
+					'coupon'              => __( 'Coupon', 'hsg-campaign-manager' ),
+					'date'                => __( 'Date', 'hsg-campaign-manager' ),
+					'regularPrice'        => __( 'Regular price', 'hsg-campaign-manager' ),
+					'winningCampaign'     => __( 'Winning campaign', 'hsg-campaign-manager' ),
+					'finalPrice'          => __( 'Final price', 'hsg-campaign-manager' ),
+					'discountAmount'      => __( 'Discount amount', 'hsg-campaign-manager' ),
+					'explanation'         => __( 'Explanation', 'hsg-campaign-manager' ),
+					'applicableCampaigns' => __( 'Applicable campaigns', 'hsg-campaign-manager' ),
+					'rejectedCampaigns'   => __( 'Rejected campaigns', 'hsg-campaign-manager' ),
+					'campaign'            => __( 'Campaign', 'hsg-campaign-manager' ),
+					'type'                => __( 'Type', 'hsg-campaign-manager' ),
+					'stackable'           => __( 'Stackable', 'hsg-campaign-manager' ),
+					'reason'              => __( 'Reason', 'hsg-campaign-manager' ),
+					'searchProduct'       => __( 'Search product...', 'hsg-campaign-manager' ),
 				),
 			)
 		);
@@ -125,6 +151,7 @@ final class Admin {
 	public function render_page(): void {
 
 		$campaigns = $this->service->list_rows();
+		$roles     = wp_roles()->roles;
 
 		require HSGCM_PATH . 'templates/admin/campaigns.php';
 

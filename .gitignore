@@ -46,3 +46,13 @@ wp-config.php
 # Note: If you wish to whitelist themes,
 # uncomment the next line
 #/wp-content/themes
+# Local development files
+.vscode/
+wp-cli.phar
+dog_with_tail.gif
+.vscode/
+wp-cli.phar
+dog_with_tail.gif
+setup-ai.ps1
+
+php-*.zip

@@ -35,6 +35,41 @@ final class PriceCalculator {
 	}
 
 	/**
+	 * Calculate a single-product multi-buy total.
+	 *
+	 * @param float  $base_price Base unit price.
+	 * @param int    $quantity Quantity.
+	 * @param object $campaign Campaign.
+	 *
+	 * @return float
+	 */
+	public function calculate_multi_buy_total(
+		float $base_price,
+		int $quantity,
+		object $campaign
+	): float {
+
+		$quantity     = max( 0, $quantity );
+		$bundle_size  = max( 0, (int) ( $campaign->quantity ?? 0 ) );
+		$bundle_price = (float) ( $campaign->bundle_price ?? 0 );
+
+		if ( $quantity <= 0 || $bundle_size < 2 || $bundle_price <= 0 ) {
+			return 0.0;
+		}
+
+		$bundle_count      = intdiv( $quantity, $bundle_size );
+		$remaining         = $quantity % $bundle_size;
+		$multi_buy_total   = $bundle_count * $bundle_price;
+		$remaining_total   = $remaining * max( 0.0, $base_price );
+
+		return max(
+			0.0,
+			(float) wc_format_decimal( $multi_buy_total + $remaining_total )
+		);
+
+	}
+
+	/**
 	 * Apply a single campaign.
 	 *
 	 * @param float  $price    Current price.

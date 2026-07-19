@@ -65,6 +65,28 @@
 	min-width: 180px;
 }
 
+.hsgcm-simulator {
+	margin-top: 28px;
+	padding-top: 20px;
+	border-top: 1px solid #dcdcde;
+}
+
+.hsgcm-simulation-results {
+	margin-top: 16px;
+}
+
+.hsgcm-simulation-summary th {
+	width: 160px;
+}
+
+.hsgcm-simulation-section {
+	margin-top: 16px;
+}
+
+.hsgcm-simulation-section h3 {
+	margin-top: 0;
+}
+
 .widefat td {
 	vertical-align: middle;
 }
