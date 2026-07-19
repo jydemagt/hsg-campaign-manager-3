@@ -1,35 +1,58 @@
 <?php
-class Loader {
-    private $actions = array();
-    private $filters = array();
+/**
+ * Autoloader
+ *
+ * @package HSGCampaignManager
+ */
 
-    public function add_action($hook, $component, $callback, $priority = 10, $accepted_args = 1) {
-        $this->actions[] = array(
-            'hook'          => $hook,
-            'component'     => $component,
-            'callback'      => $callback,
-            'priority'      => $priority,
-            'accepted_args' => $accepted_args
-        );
-    }
+namespace HSGCM;
 
-    public function add_filter($hook, $component, $callback, $priority = 10, $accepted_args = 1) {
-        $this->filters[] = array(
-            'hook'          => $hook,
-            'component'     => $component,
-            'callback'      => $callback,
-            'priority'      => $priority,
-            'accepted_args' => $accepted_args
-        );
-    }
+defined( 'ABSPATH' ) || exit;
 
-    public function run() {
-        foreach ($this->actions as $hook) {
-            add_action($hook['hook'], array($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
-        }
+final class Loader {
 
-        foreach ($this->filters as $hook) {
-            add_filter($hook['hook'], array($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
-        }
-    }
+	/**
+	 * Register autoloader.
+	 *
+	 * @return void
+	 */
+	public static function register(): void {
+
+		spl_autoload_register(
+			array(
+				self::class,
+				'autoload',
+			)
+		);
+
+	}
+
+	/**
+	 * Autoload classes.
+	 *
+	 * @param string $class Class name.
+	 *
+	 * @return void
+	 */
+	private static function autoload( string $class ): void {
+
+		$prefix = __NAMESPACE__ . '\\';
+
+		if ( strncmp( $prefix, $class, strlen( $prefix ) ) !== 0 ) {
+			return;
+		}
+
+		$relative_class = substr( $class, strlen( $prefix ) );
+
+		$file = HSGCM_PATH .
+			'includes/' .
+			str_replace( '\\', DIRECTORY_SEPARATOR, $relative_class ) .
+			'.php';
+
+		if ( file_exists( $file ) ) {
+			require_once $file;
+		}
+
+	}
+
 }
