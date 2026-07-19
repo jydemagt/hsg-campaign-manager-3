@@ -1,6 +1,6 @@
 <?php
 /**
- * Cart Pricing Service
+ * Cart Pricing Service.
  *
  * @package HSGCampaignManager
  */
@@ -33,18 +33,28 @@ final class CartPricingService {
 	private CampaignLabelService $label_service;
 
 	/**
+	 * Original active prices for the current request.
+	 *
+	 * Prices are stored by cart item key so repeated executions of
+	 * woocommerce_before_calculate_totals do not apply campaign pricing
+	 * to a price that this service has already changed.
+	 *
+	 * @var array<string,float>
+	 */
+	private array $base_prices = array();
+
+	/**
 	 * Constructor.
 	 *
-	 * @param CouponService         $coupon_service Coupon service.
-	 * @param PriceCalculator      $calculator Price calculator.
-	 * @param CampaignLabelService $label_service Campaign label service.
+	 * @param CouponService        $coupon_service Coupon service.
+	 * @param PriceCalculator      $calculator     Price calculator.
+	 * @param CampaignLabelService $label_service  Campaign label service.
 	 */
 	public function __construct(
 		CouponService $coupon_service,
 		PriceCalculator $calculator,
 		CampaignLabelService $label_service
 	) {
-
 		$this->coupon_service = $coupon_service;
 		$this->calculator     = $calculator;
 		$this->label_service  = $label_service;
@@ -62,18 +72,16 @@ final class CartPricingService {
 			20,
 			2
 		);
-
 	}
 
 	/**
-	 * Apply cart pricing.
+	 * Apply campaign pricing to cart items.
 	 *
 	 * @param \WC_Cart $cart Cart.
 	 *
 	 * @return void
 	 */
 	public function apply( \WC_Cart $cart ): void {
-
 		if ( is_admin() && ! wp_doing_ajax() ) {
 			return;
 		}
@@ -85,23 +93,20 @@ final class CartPricingService {
 		$coupon_codes = $this->coupon_service->getAppliedCouponCodes();
 		$groups       = $this->collect_groups( $cart, $coupon_codes );
 
-		foreach ( $groups as $campaign_id => $group ) {
-
+		foreach ( $groups as $group ) {
 			$this->apply_group(
 				$cart,
 				$group['campaign'],
 				$group['items']
 			);
-
 		}
-
 	}
 
 	/**
 	 * Collect multi-buy groups from the cart.
 	 *
-	 * @param \WC_Cart $cart Cart.
-	 * @param array    $coupon_codes Coupon codes.
+	 * @param \WC_Cart $cart         Cart.
+	 * @param array    $coupon_codes Applied coupon codes.
 	 *
 	 * @return array
 	 */
@@ -109,11 +114,9 @@ final class CartPricingService {
 		\WC_Cart $cart,
 		array $coupon_codes
 	): array {
-
 		$groups = array();
 
 		foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
-
 			$product = $cart_item['data'] ?? null;
 
 			if ( ! $product instanceof \WC_Product ) {
@@ -126,6 +129,7 @@ final class CartPricingService {
 			);
 
 			$base_price = $this->get_base_price(
+				(string) $cart_item_key,
 				$product,
 				$resolved_campaigns
 			);
@@ -139,13 +143,12 @@ final class CartPricingService {
 			}
 
 			$groups[ $campaign->id ]['campaign'] = $campaign;
-			$groups[ $campaign->id ]['items'][] = array(
+			$groups[ $campaign->id ]['items'][]  = array(
 				'key'        => $cart_item_key,
 				'quantity'   => max( 0, (int) ( $cart_item['quantity'] ?? 0 ) ),
 				'product_id' => (int) $product->get_id(),
 				'base_price' => $base_price,
 			);
-
 		}
 
 		return array_filter(
@@ -154,7 +157,6 @@ final class CartPricingService {
 				return ! empty( $group['items'] ) && isset( $group['campaign'] );
 			}
 		);
-
 	}
 
 	/**
@@ -165,7 +167,6 @@ final class CartPricingService {
 	 * @return object|null
 	 */
 	private function find_multi_buy_campaign( array $campaigns ): ?object {
-
 		foreach ( $campaigns as $campaign ) {
 			if ( 'multi_buy' === $campaign->type ) {
 				return $campaign;
@@ -173,31 +174,37 @@ final class CartPricingService {
 		}
 
 		return null;
-
 	}
 
 	/**
 	 * Get the base price for a cart item.
 	 *
-	 * @param \WC_Product $product Product.
-	 * @param array       $campaigns Campaigns.
+	 * The original active WooCommerce price is cached for the current
+	 * request. This preserves native sale prices and prevents campaign
+	 * pricing from compounding when cart totals are recalculated.
+	 *
+	 * @param string      $cart_item_key Cart item key.
+	 * @param \WC_Product $product       Product.
+	 * @param array       $campaigns     Campaigns.
 	 *
 	 * @return float
 	 */
 	private function get_base_price(
+		string $cart_item_key,
 		\WC_Product $product,
 		array $campaigns
 	): float {
+		if ( ! array_key_exists( $cart_item_key, $this->base_prices ) ) {
+			$active_price = $product->get_price( 'edit' );
 
-		$regular_price = $product->get_regular_price( 'edit' );
+			if ( ! is_numeric( $active_price ) ) {
+				return 0.0;
+			}
 
-		if ( '' === $regular_price ) {
-			$regular_price = $product->get_price( 'edit' );
+			$this->base_prices[ $cart_item_key ] = (float) $active_price;
 		}
 
-		if ( ! is_numeric( $regular_price ) ) {
-			return 0.0;
-		}
+		$base_price = $this->base_prices[ $cart_item_key ];
 
 		$pricing_campaigns = array_filter(
 			$campaigns,
@@ -210,22 +217,21 @@ final class CartPricingService {
 		);
 
 		if ( empty( $pricing_campaigns ) ) {
-			return (float) $regular_price;
+			return $base_price;
 		}
 
 		return $this->calculator->calculate(
-			(float) $regular_price,
+			$base_price,
 			$pricing_campaigns
 		);
-
 	}
 
 	/**
 	 * Apply a multi-buy campaign to its cart group.
 	 *
-	 * @param \WC_Cart $cart Cart.
+	 * @param \WC_Cart $cart     Cart.
 	 * @param object   $campaign Campaign.
-	 * @param array    $items Group items.
+	 * @param array    $items    Group items.
 	 *
 	 * @return void
 	 */
@@ -234,8 +240,7 @@ final class CartPricingService {
 		object $campaign,
 		array $items
 	): void {
-
-		$bundle_size = max( 0, (int) ( $campaign->quantity ?? 0 ) );
+		$bundle_size  = max( 0, (int) ( $campaign->quantity ?? 0 ) );
 		$bundle_price = (float) ( $campaign->bundle_price ?? 0 );
 
 		if ( $bundle_size < 2 || $bundle_price <= 0 || empty( $items ) ) {
@@ -245,7 +250,6 @@ final class CartPricingService {
 		$units = array();
 
 		foreach ( $items as $item ) {
-
 			$quantity = max( 0, (int) ( $item['quantity'] ?? 0 ) );
 
 			if ( $quantity <= 0 ) {
@@ -258,7 +262,6 @@ final class CartPricingService {
 					'base' => (float) ( $item['base_price'] ?? 0 ),
 				);
 			}
-
 		}
 
 		$bundle_count = intdiv( count( $units ), $bundle_size );
@@ -268,16 +271,15 @@ final class CartPricingService {
 		}
 
 		$bundle_shares = $this->split_amount( $bundle_price, $bundle_size );
-		$assigned = array();
-		$bundle_units = $bundle_count * $bundle_size;
+		$assigned      = array();
+		$bundle_units  = $bundle_count * $bundle_size;
 
 		for ( $index = 0; $index < count( $units ); $index++ ) {
-
 			$unit = $units[ $index ];
 
 			if ( $index < $bundle_units ) {
 				$share_index = $index % $bundle_size;
-				$amount = $bundle_shares[ $share_index ];
+				$amount      = $bundle_shares[ $share_index ];
 			} else {
 				$amount = $unit['base'];
 			}
@@ -287,28 +289,26 @@ final class CartPricingService {
 			}
 
 			$assigned[ $unit['key'] ] += $amount;
-
 		}
 
 		foreach ( $assigned as $cart_item_key => $line_total ) {
-
 			if ( ! isset( $cart->cart_contents[ $cart_item_key ] ) ) {
 				continue;
 			}
 
-			$quantity = max( 1, (int) ( $cart->cart_contents[ $cart_item_key ]['quantity'] ?? 1 ) );
+			$quantity = max(
+				1,
+				(int) ( $cart->cart_contents[ $cart_item_key ]['quantity'] ?? 1 )
+			);
+
 			$product = $cart->cart_contents[ $cart_item_key ]['data'] ?? null;
 
 			if ( ! $product instanceof \WC_Product ) {
 				continue;
 			}
 
-			$product->set_price(
-				$line_total / $quantity
-			);
-
+			$product->set_price( $line_total / $quantity );
 		}
-
 	}
 
 	/**
@@ -323,7 +323,6 @@ final class CartPricingService {
 		array $item_data,
 		array $cart_item
 	): array {
-
 		$product = $cart_item['data'] ?? null;
 
 		if ( ! $product instanceof \WC_Product ) {
@@ -340,16 +339,13 @@ final class CartPricingService {
 		}
 
 		foreach ( $campaign_item_data as $campaign_item ) {
-
 			$item_data[] = array(
 				'name'    => esc_html( $campaign_item['name'] ),
 				'display' => esc_html( $campaign_item['display'] ),
 			);
-
 		}
 
 		return $item_data;
-
 	}
 
 	/**
@@ -364,25 +360,22 @@ final class CartPricingService {
 		float $amount,
 		int $pieces
 	): array {
-
 		if ( $pieces <= 0 ) {
 			return array();
 		}
 
-		$decimals = wc_get_price_decimals();
+		$decimals   = wc_get_price_decimals();
 		$multiplier = 10 ** $decimals;
 		$total_minor = (int) round( $amount * $multiplier );
-		$base_minor = intdiv( $total_minor, $pieces );
-		$remainder = $total_minor % $pieces;
-		$shares = array();
+		$base_minor  = intdiv( $total_minor, $pieces );
+		$remainder   = $total_minor % $pieces;
+		$shares      = array();
 
 		for ( $i = 0; $i < $pieces; $i++ ) {
 			$share_minor = $base_minor + ( $i < $remainder ? 1 : 0 );
-			$shares[] = $share_minor / $multiplier;
+			$shares[]    = $share_minor / $multiplier;
 		}
 
 		return $shares;
-
 	}
-
 }
