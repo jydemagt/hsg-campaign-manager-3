@@ -82,7 +82,7 @@ final class SimulationService {
 		if ( null === $regular_price ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Product does not have a numeric regular price.', 'hsg-campaign-manager' ),
+				'message' => __( 'Product does not have a numeric active price.', 'hsg-campaign-manager' ),
 			);
 		}
 
@@ -232,17 +232,17 @@ final class SimulationService {
 	 */
 	private function get_regular_price( \WC_Product $product ): ?float {
 
-		$regular_price = $product->get_regular_price( 'edit' );
+		$active_price = $product->get_price( 'edit' );
 
-		if ( '' === $regular_price ) {
-			$regular_price = $product->get_price( 'edit' );
+		if ( '' === $active_price ) {
+			$active_price = $product->get_regular_price( 'edit' );
 		}
 
-		if ( ! is_numeric( $regular_price ) ) {
+		if ( ! is_numeric( $active_price ) ) {
 			return null;
 		}
 
-		return (float) $regular_price;
+		return (float) $active_price;
 
 	}
 
