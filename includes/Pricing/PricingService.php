@@ -76,6 +76,13 @@ final class PricingService {
 			2
 		);
 
+		add_filter(
+			'woocommerce_get_variation_prices_hash',
+			array( $this, 'filter_variation_prices_hash' ),
+			20,
+			3
+		);
+
 		add_action(
 			'woocommerce_single_product_summary',
 			array( $this, 'render_product_labels' ),
@@ -158,6 +165,75 @@ final class PricingService {
 				(float) $price
 			)
 		);
+	}
+
+	/**
+	 * Add active campaign pricing to the variation price cache key.
+	 *
+	 * WooCommerce caches variation price ranges. Campaign pricing can
+	 * change independently of product data, so all active, non-coupon
+	 * campaigns that affect normal variation prices must be represented
+	 * in the cache hash.
+	 *
+	 * @param array       $price_hash  Existing cache hash data.
+	 * @param \WC_Product $product     Variable product.
+	 * @param bool        $for_display Whether prices are for display.
+	 *
+	 * @return array
+	 */
+	public function filter_variation_prices_hash(
+		$price_hash,
+		$product,
+		$for_display
+	): array {
+		if ( ! is_array( $price_hash ) ) {
+			$price_hash = array( $price_hash );
+		}
+
+		$signature = array();
+		$loader    = new CampaignLoader();
+
+		foreach ( $loader->active() as $campaign ) {
+			if (
+				'multi_buy' === ( $campaign->type ?? '' ) ||
+				! empty( $campaign->coupon )
+			) {
+				continue;
+			}
+
+			$products = array_values(
+				array_filter(
+					array_map(
+						'absint',
+						(array) ( $campaign->products ?? array() )
+					)
+				)
+			);
+
+			sort( $products, SORT_NUMERIC );
+
+			$signature[] = array(
+				'id'        => (int) ( $campaign->id ?? 0 ),
+				'priority'  => (int) ( $campaign->priority ?? 0 ),
+				'type'      => (string) ( $campaign->type ?? '' ),
+				'value'     => (float) ( $campaign->value ?? 0 ),
+				'products'  => $products,
+				'stackable' => ! empty( $campaign->stackable ),
+			);
+		}
+
+		usort(
+			$signature,
+			static function ( array $a, array $b ): int {
+				return $a['id'] <=> $b['id'];
+			}
+		);
+
+		$price_hash['hsgcm_campaign_pricing'] = md5(
+			wp_json_encode( $signature )
+		);
+
+		return $price_hash;
 	}
 
 	/**
