@@ -274,9 +274,20 @@ final class CartPricingService {
 			return;
 		}
 
+		$bundle_units          = $bundle_count * $bundle_size;
+		$regular_bundle_total  = 0.0;
+		$campaign_bundle_total = $bundle_count * $bundle_price;
+
+		for ( $index = 0; $index < $bundle_units; $index++ ) {
+			$regular_bundle_total += (float) $units[ $index ]['base'];
+		}
+
+		if ( $campaign_bundle_total >= $regular_bundle_total ) {
+			return;
+		}
+
 		$bundle_shares = $this->split_amount( $bundle_price, $bundle_size );
 		$assigned      = array();
-		$bundle_units  = $bundle_count * $bundle_size;
 
 		for ( $index = 0; $index < count( $units ); $index++ ) {
 			$unit = $units[ $index ];

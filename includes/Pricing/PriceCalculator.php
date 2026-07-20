@@ -81,10 +81,12 @@ final class PriceCalculator {
 		$multi_buy_total = $bundle_count * $bundle_price;
 		$remaining_total = $remaining * $base_price;
 
+		$campaign_total = $multi_buy_total + $remaining_total;
+
 		return max(
 			0.0,
 			(float) wc_format_decimal(
-				$multi_buy_total + $remaining_total
+				min( $regular_total, $campaign_total )
 			)
 		);
 	}
