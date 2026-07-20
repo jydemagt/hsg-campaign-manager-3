@@ -134,6 +134,10 @@ final class CartPricingService {
 				$resolved_campaigns
 			);
 
+			if ( null === $base_price ) {
+				continue;
+			}
+
 			$product->set_price( $base_price );
 
 			$campaign = $this->find_multi_buy_campaign( $resolved_campaigns );
@@ -187,18 +191,18 @@ final class CartPricingService {
 	 * @param \WC_Product $product       Product.
 	 * @param array       $campaigns     Campaigns.
 	 *
-	 * @return float
+	 * @return float|null
 	 */
 	private function get_base_price(
 		string $cart_item_key,
 		\WC_Product $product,
 		array $campaigns
-	): float {
+	): ?float {
 		if ( ! array_key_exists( $cart_item_key, $this->base_prices ) ) {
 			$active_price = $product->get_price( 'edit' );
 
 			if ( ! is_numeric( $active_price ) ) {
-				return 0.0;
+				return null;
 			}
 
 			$this->base_prices[ $cart_item_key ] = (float) $active_price;
