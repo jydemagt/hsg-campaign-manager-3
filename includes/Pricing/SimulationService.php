@@ -59,9 +59,7 @@ final class SimulationService {
 	 * @return array
 	 */
 	public function simulate( array $input ): array {
-
-		$input = $this->sanitize( $input );
-
+		$input      = $this->sanitize( $input );
 		$validation = $this->validate( $input );
 
 		if ( ! $validation['success'] ) {
@@ -86,12 +84,18 @@ final class SimulationService {
 			);
 		}
 
-		$campaigns_for_date = $this->loader->campaigns_for_date( $input['date'] );
-		$coupon_codes       = $this->normalize_coupon_codes(
-			'' === $input['coupon'] ? array() : array( $input['coupon'] )
+		$campaigns_for_date = $this->loader->campaigns_for_date(
+			$input['date']
 		);
-		$applicable         = array();
-		$rejected           = array();
+
+		$coupon_codes = $this->normalize_coupon_codes(
+			'' === $input['coupon']
+				? array()
+				: array( $input['coupon'] )
+		);
+
+		$applicable = array();
+		$rejected   = array();
 
 		foreach ( $campaigns_for_date['rejected'] as $rejection ) {
 			$rejected[] = $this->format_rejection(
@@ -101,42 +105,82 @@ final class SimulationService {
 		}
 
 		foreach ( $campaigns_for_date['active'] as $campaign ) {
-
-			if ( ! $this->evaluator->applies( $campaign, $input['product_id'] ) ) {
+			if (
+				! $this->evaluator->applies(
+					$campaign,
+					$input['product_id']
+				)
+			) {
 				$rejected[] = $this->format_rejection(
 					$campaign,
-					__( 'Campaign does not apply to the selected product.', 'hsg-campaign-manager' )
+					__(
+						'Campaign does not apply to the selected product.',
+						'hsg-campaign-manager'
+					)
 				);
+
 				continue;
 			}
 
-			if ( $this->is_supported_coupon_campaign( $campaign ) ) {
-
-				$campaign_coupon = $this->normalize_coupon_code( (string) ( $campaign->coupon ?? '' ) );
-
-				if ( '' === $campaign_coupon || ! in_array( $campaign_coupon, $coupon_codes, true ) ) {
+			if ( ! empty( $campaign->coupon ) ) {
+				if ( ! $this->is_supported_coupon_campaign( $campaign ) ) {
 					$rejected[] = $this->format_rejection(
 						$campaign,
-						__( 'Campaign requires its coupon code to be applied.', 'hsg-campaign-manager' )
+						__(
+							'Coupon codes are not supported for this campaign type.',
+							'hsg-campaign-manager'
+						)
 					);
+
 					continue;
 				}
 
+				$campaign_coupon = $this->normalize_coupon_code(
+					(string) ( $campaign->coupon ?? '' )
+				);
+
+				if (
+					'' === $campaign_coupon ||
+					! in_array(
+						$campaign_coupon,
+						$coupon_codes,
+						true
+					)
+				) {
+					$rejected[] = $this->format_rejection(
+						$campaign,
+						__(
+							'Campaign requires its coupon code to be applied.',
+							'hsg-campaign-manager'
+						)
+					);
+
+					continue;
+				}
 			}
 
 			$applicable[] = $campaign;
-
 		}
 
-		$resolved        = $this->resolver->resolve( $applicable );
-		$winning        = empty( $resolved ) ? null : reset( $resolved );
-		$regular_total  = $regular_price * $input['quantity'];
-		$standard       = $this->standard_pricing_campaigns( $resolved );
-		$unit_price     = empty( $standard )
+		$resolved = $this->resolver->resolve( $applicable );
+		$winning  = empty( $resolved ) ? null : reset( $resolved );
+
+		$regular_total = $regular_price * $input['quantity'];
+
+		$standard = $this->standard_pricing_campaigns( $resolved );
+
+		$unit_price = empty( $standard )
 			? $regular_price
-			: $this->calculator->calculate( $regular_price, $standard );
-		$final_total    = $unit_price * $input['quantity'];
-		$multi_buy      = $this->find_multi_buy_campaign( $resolved );
+			: min(
+				$regular_price,
+				$this->calculator->calculate(
+					$regular_price,
+					$standard
+				)
+			);
+
+		$final_total = $unit_price * $input['quantity'];
+		$multi_buy   = $this->find_multi_buy_campaign( $resolved );
 
 		if ( $multi_buy ) {
 			$final_total = $this->calculator->calculate_multi_buy_total(
@@ -146,26 +190,44 @@ final class SimulationService {
 			);
 		}
 
-		$discount_amount = max( 0.0, $regular_total - $final_total );
+		$discount_amount = max(
+			0.0,
+			$regular_total - $final_total
+		);
 
 		return array(
 			'success' => true,
-			'data'    => array(
-				'product'              => $product->get_formatted_name(),
-				'quantity'             => $input['quantity'],
-				'customer_role'        => $input['customer_role'],
-				'coupon'               => $input['coupon'],
-				'date'                 => $input['date'],
-				'regular_price'        => $this->format_price( $regular_total ),
-				'applicable_campaigns' => array_map( array( $this, 'format_campaign' ), $applicable ),
-				'rejected_campaigns'   => $rejected,
-				'winning_campaign'     => $winning ? $this->format_campaign( $winning ) : null,
-				'final_price'          => $this->format_price( $final_total ),
-				'discount_amount'      => $this->format_price( $discount_amount ),
-				'explanation'          => $this->build_explanation( $input, $applicable, $resolved, $multi_buy ),
+			'data' => array(
+				'product' => $product->get_formatted_name(),
+				'quantity' => $input['quantity'],
+				'customer_role' => $input['customer_role'],
+				'coupon' => $input['coupon'],
+				'date' => $input['date'],
+				'regular_price' => $this->format_price(
+					$regular_total
+				),
+				'applicable_campaigns' => array_map(
+					array( $this, 'format_campaign' ),
+					$applicable
+				),
+				'rejected_campaigns' => $rejected,
+				'winning_campaign' => $winning
+					? $this->format_campaign( $winning )
+					: null,
+				'final_price' => $this->format_price(
+					$final_total
+				),
+				'discount_amount' => $this->format_price(
+					$discount_amount
+				),
+				'explanation' => $this->build_explanation(
+					$input,
+					$applicable,
+					$resolved,
+					$multi_buy
+				),
 			),
 		);
-
 	}
 
 	/**
@@ -224,7 +286,7 @@ final class SimulationService {
 	}
 
 	/**
-	 * Return product regular price.
+	 * Return the product's active WooCommerce price.
 	 *
 	 * @param \WC_Product $product Product.
 	 *
@@ -254,7 +316,6 @@ final class SimulationService {
 	 * @return array
 	 */
 	private function standard_pricing_campaigns( array $campaigns ): array {
-
 		return array_values(
 			array_filter(
 				$campaigns,
@@ -263,20 +324,20 @@ final class SimulationService {
 						'multi_buy' !== $campaign->type &&
 						(
 							empty( $campaign->coupon ) ||
-							(
-								! empty( $campaign->coupon ) &&
-								in_array(
-									$campaign->type,
-									array( 'percentage_discount', 'fixed_discount' ),
-									true
-								)
+							in_array(
+								$campaign->type,
+								array(
+									'fixed_price',
+									'percentage_discount',
+									'fixed_discount',
+								),
+								true
 							)
 						)
 					);
 				}
 			)
 		);
-
 	}
 
 	/**
@@ -390,16 +451,18 @@ final class SimulationService {
 	 * @return bool
 	 */
 	private function is_supported_coupon_campaign( object $campaign ): bool {
-
 		return (
 			! empty( $campaign->coupon ) &&
 			in_array(
 				$campaign->type,
-				array( 'percentage_discount', 'fixed_discount' ),
+				array(
+					'fixed_price',
+					'percentage_discount',
+					'fixed_discount',
+				),
 				true
 			)
 		);
-
 	}
 
 	/**

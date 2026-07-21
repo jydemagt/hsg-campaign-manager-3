@@ -736,6 +736,15 @@ final class CampaignService {
 		}
 
 		if ( 'multi_buy' === $campaign['type'] ) {
+			if ( '' !== trim( (string) $campaign['coupon'] ) ) {
+				return array(
+					'success' => false,
+					'message' => __(
+						'Coupon codes are not supported for multi-buy campaigns.',
+						'hsg-campaign-manager'
+					),
+				);
+			}
 
 			if ( empty( array_filter( array_map( 'absint', (array) $campaign['products'] ) ) ) ) {
 
@@ -765,6 +774,19 @@ final class CampaignService {
 			}
 
 		} else {
+
+			if (
+				'' !== trim( (string) $campaign['coupon'] ) &&
+				$this->coupon_code_is_in_use( $campaign )
+			) {
+				return array(
+					'success' => false,
+					'message' => __(
+						'Coupon code is already used by another campaign or WooCommerce coupon.',
+						'hsg-campaign-manager'
+					),
+				);
+			}
 
 			if ( '' === $campaign['value'] ) {
 
@@ -817,6 +839,73 @@ final class CampaignService {
 			'success' => true,
 		);
 
+	}
+
+
+	/**
+	 * Check whether another campaign already uses a coupon code.
+	 *
+	 * A virtual WooCommerce coupon code must map to one campaign so its
+	 * product restrictions, value, schedule, and priority remain unambiguous.
+	 *
+	 * @param array $campaign Campaign being validated.
+	 *
+	 * @return bool
+	 */
+	private function coupon_code_is_in_use( array $campaign ): bool {
+		$code = $this->normalize_coupon_code(
+			(string) ( $campaign['coupon'] ?? '' )
+		);
+
+		if ( '' === $code ) {
+			return false;
+		}
+
+		if (
+			function_exists( 'wc_get_coupon_id_by_code' ) &&
+			wc_get_coupon_id_by_code( $code ) > 0
+		) {
+			return true;
+		}
+
+		$campaign_id = absint( $campaign['id'] ?? 0 );
+
+		foreach ( $this->repository->all_raw() as $other ) {
+			if ( absint( $other['id'] ?? 0 ) === $campaign_id ) {
+				continue;
+			}
+
+			if (
+				$this->normalize_coupon_code(
+					(string) ( $other['coupon'] ?? '' )
+				) === $code
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Normalize a coupon code for comparison.
+	 *
+	 * @param string $code Coupon code.
+	 *
+	 * @return string
+	 */
+	private function normalize_coupon_code( string $code ): string {
+		$code = trim( $code );
+
+		if ( '' === $code ) {
+			return '';
+		}
+
+		if ( function_exists( 'wc_format_coupon_code' ) ) {
+			return wc_format_coupon_code( $code );
+		}
+
+		return strtolower( $code );
 	}
 
 	/**
