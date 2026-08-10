@@ -58,7 +58,7 @@ final class CampaignLabelService {
 
 			$label = sprintf(
 				/* translators: %s: campaign label text. */
-				__( 'Campaign: %s', 'hsg-campaign-manager' ),
+				__( 'Kampagne: %s', 'hsg-campaign-manager' ),
 				$text
 			);
 
@@ -98,7 +98,7 @@ final class CampaignLabelService {
 			}
 
 			$items[ $text ] = array(
-				'name'    => __( 'Campaign', 'hsg-campaign-manager' ),
+				'name'    => __( 'Kampagne', 'hsg-campaign-manager' ),
 				'display' => $text,
 			);
 
@@ -121,28 +121,28 @@ final class CampaignLabelService {
 			case 'fixed_price':
 				return sprintf(
 					/* translators: %s: formatted campaign price. */
-					__( 'Fixed price %s', 'hsg-campaign-manager' ),
+					__( 'Fast pris %s', 'hsg-campaign-manager' ),
 					$this->format_price( (float) ( $campaign->value ?? 0 ) )
 				);
 
 			case 'percentage_discount':
 				return sprintf(
 					/* translators: %s: percentage discount value. */
-					__( '%s%% discount', 'hsg-campaign-manager' ),
+					__( '%s%% rabat', 'hsg-campaign-manager' ),
 					$this->format_number( (float) ( $campaign->value ?? 0 ) )
 				);
 
 			case 'fixed_discount':
 				return sprintf(
 					/* translators: %s: formatted discount amount. */
-					__( '%s discount', 'hsg-campaign-manager' ),
+					__( '%s rabat', 'hsg-campaign-manager' ),
 					$this->format_price( (float) ( $campaign->value ?? 0 ) )
 				);
 
 			case 'multi_buy':
 				return sprintf(
 					/* translators: 1: campaign quantity, 2: formatted bundle price. */
-					__( '%1$d for %2$s', 'hsg-campaign-manager' ),
+					__( '%1$d stk. for %2$s', 'hsg-campaign-manager' ),
 					max( 0, (int) ( $campaign->quantity ?? 0 ) ),
 					$this->format_price( (float) ( $campaign->bundle_price ?? 0 ) )
 				);

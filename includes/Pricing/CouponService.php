@@ -251,7 +251,7 @@ final class CouponService {
 		$campaign = $this->find_campaign_by_code( $code );
 
 		if ( $campaign ) {
-			$this->errors[ $code ] = __( 'This campaign coupon is not active right now.', 'hsg-campaign-manager' );
+			$this->errors[ $code ] = __( 'Denne rabatkode er ikke aktiv lige nu.', 'hsg-campaign-manager' );
 			return false;
 		}
 
