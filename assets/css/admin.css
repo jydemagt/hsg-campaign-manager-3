@@ -1,56 +1,120 @@
 /**
  * HSG Campaign Manager
- * Admin
+ * Admin UI
  */
 
+.hsgcm-admin-page {
+	--hsgcm-border: #dcdcde;
+	--hsgcm-muted: #646970;
+	--hsgcm-bg-soft: #f6f7f7;
+	--hsgcm-blue: #2271b1;
+}
+
+.hsgcm-admin-page #hsgcm-notice {
+	margin: 16px 0 0;
+}
+
 .hsgcm-wrapper {
-	display: flex;
+	display: grid;
+	grid-template-columns: minmax(0, 1.8fr) minmax(360px, 0.9fr);
 	gap: 24px;
 	margin-top: 20px;
-	align-items: flex-start;
+	align-items: start;
+}
+
+.hsgcm-list,
+.hsgcm-editor {
+	background: #fff;
+	border: 1px solid var(--hsgcm-border);
+	border-radius: 4px;
+	box-sizing: border-box;
 }
 
 .hsgcm-list {
-	flex: 2;
-	background: #fff;
-	border: 1px solid #dcdcde;
 	padding: 20px;
-	border-radius: 4px;
-	box-sizing: border-box;
 	overflow-x: auto;
 }
 
 .hsgcm-editor {
-	flex: 1.2;
-	background: #fff;
-	border: 1px solid #dcdcde;
 	padding: 20px;
-	border-radius: 4px;
-	box-sizing: border-box;
 	position: sticky;
 	top: 32px;
 }
 
-.hsgcm-list h2,
-.hsgcm-editor h2 {
-	margin-top: 0;
+.hsgcm-list > h2,
+.hsgcm-editor > h2 {
+	margin: 0 0 16px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid #eee;
 }
 
-.hsgcm-editor .form-table {
-	margin-top: 0;
-	margin-bottom: 18px;
+.hsgcm-campaign-table {
+	min-width: 980px;
 }
 
-.hsgcm-editor h3 {
-	margin: 20px 0 8px;
-	padding-bottom: 8px;
-	border-bottom: 1px solid #dcdcde;
+.hsgcm-campaign-table th,
+.hsgcm-campaign-table td {
+	vertical-align: middle;
 }
 
-.hsgcm-editor h3:first-of-type {
-	margin-top: 0;
+.hsgcm-actions-column {
+	width: 190px;
+}
+
+.hsgcm-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.hsgcm-actions .button {
+	white-space: nowrap;
+}
+
+.hsgcm-empty-state {
+	padding: 28px 16px !important;
+	text-align: center;
+}
+
+.hsgcm-empty-state strong,
+.hsgcm-empty-state span {
+	display: block;
+}
+
+.hsgcm-empty-state span {
+	margin-top: 4px;
+	color: var(--hsgcm-muted);
+}
+
+.hsgcm-section {
+	padding: 0 0 18px;
+	margin: 0 0 18px;
+	border-bottom: 1px solid var(--hsgcm-border);
+}
+
+.hsgcm-section h3 {
+	margin: 0 0 14px;
+	font-size: 14px;
+}
+
+.hsgcm-field {
+	margin-bottom: 14px;
+}
+
+.hsgcm-field:last-child {
+	margin-bottom: 0;
+}
+
+.hsgcm-field > label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.hsgcm-field-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
 }
 
 .hsgcm-editor input[type="text"],
@@ -61,99 +125,104 @@
 	max-width: 100%;
 }
 
-.hsgcm-editor .button-primary {
-	min-width: 180px;
+.hsgcm-editor .select2-container,
+.hsgcm-editor .selectWoo-container {
+	width: 100% !important;
+	max-width: 100%;
 }
 
-.hsgcm-simulator {
-	margin-top: 28px;
-	padding-top: 20px;
-	border-top: 1px solid #dcdcde;
+.hsgcm-editor .description {
+	margin: 5px 0 0;
+	color: var(--hsgcm-muted);
 }
 
-.hsgcm-simulation-results {
-	margin-top: 16px;
+.hsgcm-coupon-row.is-disabled {
+	opacity: 0.65;
 }
 
-.hsgcm-simulation-summary th {
-	width: 160px;
+.hsgcm-info-box,
+.hsgcm-example-box {
+	padding: 12px 14px;
+	background: var(--hsgcm-bg-soft);
+	border-left: 4px solid var(--hsgcm-blue);
+	margin: 0 0 16px;
 }
 
-.hsgcm-simulation-section {
-	margin-top: 16px;
+.hsgcm-example-box {
+	margin-top: 4px;
 }
 
-.hsgcm-simulation-section h3 {
-	margin-top: 0;
-}
-
-.widefat td {
-	vertical-align: middle;
-}
-
-.hsgcm-campaign-table {
-	min-width: 980px;
-}
-
-.hsgcm-actions {
-	display: flex;
-	gap: 6px;
-	flex-wrap: wrap;
-}
-
-.notice.inline {
-	margin: 0;
-}
-
-.hsgcm-conflict-preview {
-	padding: 8px 12px;
-}
-
-.hsgcm-conflict-preview p {
-	margin: 0.5em 0;
-}
-
-.hsgcm-conflict-list {
-	margin: 8px 0 0;
-}
-
-.hsgcm-conflict-item {
-	margin: 0 0 12px;
-}
-
-.hsgcm-conflict-item:last-child {
-	margin-bottom: 0;
-}
-
-.hsgcm-conflict-item dl {
-	display: grid;
-	grid-template-columns: minmax(120px, 0.45fr) 1fr;
-	gap: 4px 10px;
+.hsgcm-example-box p {
 	margin: 6px 0 0;
 }
 
-.hsgcm-conflict-item dt {
-	font-weight: 600;
+.hsgcm-checkbox {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
 }
 
-.hsgcm-conflict-item dd {
-	margin: 0;
+.hsgcm-checkbox input {
+	margin-top: 3px;
 }
 
-@media screen and (max-width: 1200px) {
+.hsgcm-checkbox span,
+.hsgcm-checkbox small {
+	display: block;
+}
 
+.hsgcm-checkbox small {
+	margin-top: 3px;
+	color: var(--hsgcm-muted);
+	font-weight: 400;
+}
+
+.hsgcm-form-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.hsgcm-form-actions .button-primary {
+	min-width: 170px;
+}
+
+.button.is-busy {
+	opacity: 0.7;
+	cursor: wait;
+}
+
+[hidden] {
+	display: none !important;
+}
+
+@media screen and (max-width: 1280px) {
 	.hsgcm-wrapper {
-		flex-direction: column;
-	}
-
-	.hsgcm-list,
-	.hsgcm-editor {
-		width: 100%;
-		flex: none;
+		grid-template-columns: 1fr;
 	}
 
 	.hsgcm-editor {
 		position: static;
 	}
+}
 
+@media screen and (max-width: 782px) {
+	.hsgcm-list,
+	.hsgcm-editor {
+		padding: 14px;
+	}
+
+	.hsgcm-field-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.hsgcm-form-actions {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.hsgcm-form-actions .button {
+		width: 100%;
+		text-align: center;
+	}
 }
