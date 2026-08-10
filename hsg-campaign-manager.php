@@ -26,6 +26,25 @@ define( 'HSGCM_URL', plugin_dir_url( __FILE__ ) );
 
 /*
 |--------------------------------------------------------------------------
+| WooCommerce feature compatibility
+|--------------------------------------------------------------------------
+*/
+
+add_action(
+	'before_woocommerce_init',
+	static function (): void {
+		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+				'custom_order_tables',
+				__FILE__,
+				true
+			);
+		}
+	}
+);
+
+/*
+|--------------------------------------------------------------------------
 | Autoloader
 |--------------------------------------------------------------------------
 */
